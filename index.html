@@ -2,13 +2,43 @@
 <head>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        /* Add these styles to your existing CSS */
         .gridlines line {
             stroke: #bbb;
         }
         .gridlines .domain {
             stroke:none;
         }
-    </style>
+
+        .borough-filter,
+        .rider-filter,
+        #subway-toggle {
+        padding: 5px;
+        margin: 5px;
+        display: inline-block;
+        border: #d05228 solid 2px;
+        color: #d05228;
+        background-color: white;
+        cursor: pointer;
+        }
+    
+        .borough-filter:hover,
+        .rider-filter:hover,
+        #subway-toggle:hover {
+        background-color: #ffc63d;
+        }
+    
+        #sidebar h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        }
+    
+        #borough-filters,
+        #rider-filters,
+        #overlay-controls {
+        margin-bottom: 15px;
+        }
+    </style> 
 </head>
 <body>
     <h3>CitiBike Usage in New York City</h3>
@@ -19,253 +49,224 @@
     <!-- Choropleth Map SVG Nick was here -->
     
     <!-- Bar Chart SVG -->
-</body>
-<div id="sidebar" class="detailscolor">
-    <div id="clearArea"></div>
-    
-    <!-- Borough Filter Section -->
-    <h4><strong>Filter</strong> Rides by Borough</h4>
-    <div id="borough-filters"></div>
-    
-    <!-- Rider Type Filter Section -->
-    <h4><strong>Filter</strong> by Rider Type</h4>
-    <div id="rider-filters"></div>
-    
-    <!-- Subway Overlay Toggle -->
-    <h4><strong>Overlay</strong> Subway Routes</h4>
-    <div id="overlay-controls"></div>
+
+    <!-- Filters -->
+    <div id="sidebar" class="detailscolor">
+        <div id="clearArea"></div>
+        
+        <!-- Borough Filter Section -->
+        <h4><strong>Filter</strong> Rides by Borough</h4>
+        <div id="borough-filters"></div>
+        
+        <!-- Rider Type Filter Section -->
+        <h4><strong>Filter</strong> by Rider Type</h4>
+        <div id="rider-filters"></div>
+        
+        <!-- Subway Overlay Toggle -->
+        <h4><strong>Overlay</strong> Subway Routes</h4>
+        <div id="overlay-controls"></div>
     </div>
 
     <script>
-    // Constants
-    const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
-    const riderTypes = ["Member", "Casual"];
+        // Constants
+        const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
+        const riderTypes = ["Member", "Casual"];
 
-    // State variables
-    let filteredBorough = null;
-    let filteredRiderType = null;
-    let showSubwayOverlay = false;
+        // State variables
+        let filteredBorough = null;
+        let filteredRiderType = null;
+        let showSubwayOverlay = false;
 
-    // Create filter sections
-    let boroughFilters = d3.select("#borough-filters");
-    let riderFilters = d3.select("#rider-filters");
-    let overlayControls = d3.select("#overlay-controls");
+        // Create filter sections
+        let boroughFilters = d3.select("#borough-filters");
+        let riderFilters = d3.select("#rider-filters");
+        let overlayControls = d3.select("#overlay-controls");
 
-    // Add clear button
-    clearArea = d3.select("#clearArea")
-    let clearButton = clearArea
-    .append("button")
-    .attr("id", "clear")
-    .text("Reset Visualizations")
-    .on("click", clear);
-
-    // Create borough filter buttons
-    boroughs.forEach((borough) => {
-    boroughFilters
+        // Add clear button
+        clearArea = d3.select("#clearArea")
+        let clearButton = clearArea
         .append("button")
-        .attr("name", borough)
-        .attr("id", borough)
-        .attr("class", "borough-filter")
-        .attr("clicked", false)
-        .text(borough)
-        .on("click", function() { filterClick(this, 'borough'); });
-    });
+        .attr("id", "clear")
+        .text("Reset Visualizations")
+        .on("click", clear);
 
-    // Create rider type filter buttons
-    riderTypes.forEach((type) => {
-    riderFilters
+        // Create borough filter buttons
+        boroughs.forEach((borough) => {
+        boroughFilters
+            .append("button")
+            .attr("name", borough)
+            .attr("id", borough)
+            .attr("class", "borough-filter")
+            .attr("clicked", false)
+            .text(borough)
+            .on("click", function() { filterClick(this, 'borough'); });
+        });
+
+        // Create rider type filter buttons
+        riderTypes.forEach((type) => {
+        riderFilters
+            .append("button")
+            .attr("name", type)
+            .attr("id", type)
+            .attr("class", "rider-filter")
+            .attr("clicked", false)
+            .text(type)
+            .on("click", function() { filterClick(this, 'rider'); });
+        });
+
+        // Create subway overlay toggle
+        overlayControls
         .append("button")
-        .attr("name", type)
-        .attr("id", type)
-        .attr("class", "rider-filter")
+        .attr("id", "subway-toggle")
         .attr("clicked", false)
-        .text(type)
-        .on("click", function() { filterClick(this, 'rider'); });
-    });
+        .text("Show Subway Routes")
+        .on("click", toggleSubwayOverlay);
 
-    // Create subway overlay toggle
-    overlayControls
-    .append("button")
-    .attr("id", "subway-toggle")
-    .attr("clicked", false)
-    .text("Show Subway Routes")
-    .on("click", toggleSubwayOverlay);
+        // Filter click handler
+        function filterClick(button, filterType) {
+        let fil = d3.select(button);
+        let buttonClass = filterType === 'borough' ? '.borough-filter' : '.rider-filter';
+        
+        if (fil.attr("clicked") == "true") {
+            // Deselect current filter
+            if (filterType === 'borough') {
+            filteredBorough = null;
+            } else {
+            filteredRiderType = null;
+            }
+            fil.style("background-color", "white");
+            fil.attr("clicked", false);
+        } else {
+            // Select new filter
+            if (filterType === 'borough') {
+            filteredBorough = fil.attr("name");
+            } else {
+            filteredRiderType = fil.attr("name");
+            }
+            
+            // Reset other buttons in same category
+            d3.selectAll(buttonClass).each(function() {
+            d3.select(this).style("background-color", "white");
+            d3.select(this).attr("clicked", false);
+            });
+            
+            fil.attr("clicked", true);
+            fil.style("background-color", "#ffc63d");
+        }
+        
+        updateFiltered();
+        }
 
-    // Filter click handler
-    function filterClick(button, filterType) {
-    let fil = d3.select(button);
-    let buttonClass = filterType === 'borough' ? '.borough-filter' : '.rider-filter';
-    
-    if (fil.attr("clicked") == "true") {
-        // Deselect current filter
-        if (filterType === 'borough') {
+        // Subway overlay toggle handler
+        function toggleSubwayOverlay() {
+        let button = d3.select("#subway-toggle");
+        showSubwayOverlay = !showSubwayOverlay;
+        
+        if (showSubwayOverlay) {
+            button.style("background-color", "#ffc63d")
+            .text("Hide Subway Routes");
+            showSubwayLines();
+        } else {
+            button.style("background-color", "white")
+            .text("Show Subway Routes");
+            hideSubwayLines();
+        }
+        }
+
+        // Update filtered data based on all current filters
+        function updateFiltered() {
+        let filteredData = citiBikeData;
+        
+        // Apply borough filter
+        if (filteredBorough !== null) {
+            filteredData = filteredData.filter(d => d.borough === filteredBorough);
+        }
+        
+        // Apply rider type filter
+        if (filteredRiderType !== null) {
+            filteredData = filteredData.filter(d => d.riderType === filteredRiderType);
+        }
+        
+        // Apply time filter if it exists
+        if (time_start !== min_date || time_end !== max_date) {
+            filteredData = filteredData.filter(d => 
+            d.date >= time_start && d.date <= time_end
+            );
+        }
+        
+        updateVisualization(filteredData);
+        }
+
+        // Clear all filters
+        function clear() {
+        // Reset borough filters
+        d3.selectAll(".borough-filter")
+            .each(function() {
+            d3.select(this)
+                .style("background-color", "white")
+                .attr("clicked", false);
+            });
+        
+        // Reset rider type filters
+        d3.selectAll(".rider-filter")
+            .each(function() {
+            d3.select(this)
+                .style("background-color", "white")
+                .attr("clicked", false);
+            });
+            
+        // Reset subway overlay
+        if (showSubwayOverlay) {
+            toggleSubwayOverlay();
+        }
+        
+        // Reset time brush if it exists
+        if (typeof myBrush !== 'undefined') {
+            d3.select("g.brush").call(myBrush.move, null);
+        }
+        
+        // Reset all filter states
         filteredBorough = null;
-        } else {
         filteredRiderType = null;
+        time_start = min_date;
+        time_end = max_date;
+        
+        // Update visualization
+        updateFiltered();
         }
-        fil.style("background-color", "white");
-        fil.attr("clicked", false);
-    } else {
-        // Select new filter
-        if (filterType === 'borough') {
-        filteredBorough = fil.attr("name");
-        } else {
-        filteredRiderType = fil.attr("name");
+
+        // Functions to show/hide subway lines
+        function showSubwayLines() {
+        // Add your subway visualization code here
+        // For example:
+        map.selectAll(".subway-line")
+            .attr("visibility", "visible");
+        }
+
+        function hideSubwayLines() {
+        // Add your subway hide code here
+        map.selectAll(".subway-line")
+            .attr("visibility", "hidden");
+        }
+
+        // Update visualization based on filtered data
+        function updateVisualization(filteredData) {
+        // Update your main visualization here
+        // This function should handle updating all visual elements
+        // based on the current filtered dataset
+        
+        // Update time series if it exists
+        if (typeof makePath === 'function') {
+            makePath();
         }
         
-        // Reset other buttons in same category
-        d3.selectAll(buttonClass).each(function() {
-        d3.select(this).style("background-color", "white");
-        d3.select(this).attr("clicked", false);
-        });
+        // Update map
+        updateMap(filteredData);
         
-        fil.attr("clicked", true);
-        fil.style("background-color", "#ffc63d");
-    }
-    
-    updateFiltered();
-    }
-
-    // Subway overlay toggle handler
-    function toggleSubwayOverlay() {
-    let button = d3.select("#subway-toggle");
-    showSubwayOverlay = !showSubwayOverlay;
-    
-    if (showSubwayOverlay) {
-        button.style("background-color", "#ffc63d")
-        .text("Hide Subway Routes");
-        showSubwayLines();
-    } else {
-        button.style("background-color", "white")
-        .text("Show Subway Routes");
-        hideSubwayLines();
-    }
-    }
-
-    // Update filtered data based on all current filters
-    function updateFiltered() {
-    let filteredData = citiBikeData;
-    
-    // Apply borough filter
-    if (filteredBorough !== null) {
-        filteredData = filteredData.filter(d => d.borough === filteredBorough);
-    }
-    
-    // Apply rider type filter
-    if (filteredRiderType !== null) {
-        filteredData = filteredData.filter(d => d.riderType === filteredRiderType);
-    }
-    
-    // Apply time filter if it exists
-    if (time_start !== min_date || time_end !== max_date) {
-        filteredData = filteredData.filter(d => 
-        d.date >= time_start && d.date <= time_end
-        );
-    }
-    
-    updateVisualization(filteredData);
-    }
-
-    // Clear all filters
-    function clear() {
-    // Reset borough filters
-    d3.selectAll(".borough-filter")
-        .each(function() {
-        d3.select(this)
-            .style("background-color", "white")
-            .attr("clicked", false);
-        });
-    
-    // Reset rider type filters
-    d3.selectAll(".rider-filter")
-        .each(function() {
-        d3.select(this)
-            .style("background-color", "white")
-            .attr("clicked", false);
-        });
-        
-    // Reset subway overlay
-    if (showSubwayOverlay) {
-        toggleSubwayOverlay();
-    }
-    
-    // Reset time brush if it exists
-    if (typeof myBrush !== 'undefined') {
-        d3.select("g.brush").call(myBrush.move, null);
-    }
-    
-    // Reset all filter states
-    filteredBorough = null;
-    filteredRiderType = null;
-    time_start = min_date;
-    time_end = max_date;
-    
-    // Update visualization
-    updateFiltered();
-    }
-
-    // Functions to show/hide subway lines
-    function showSubwayLines() {
-    // Add your subway visualization code here
-    // For example:
-    map.selectAll(".subway-line")
-        .attr("visibility", "visible");
-    }
-
-    function hideSubwayLines() {
-    // Add your subway hide code here
-    map.selectAll(".subway-line")
-        .attr("visibility", "hidden");
-    }
-
-    // Update visualization based on filtered data
-    function updateVisualization(filteredData) {
-    // Update your main visualization here
-    // This function should handle updating all visual elements
-    // based on the current filtered dataset
-    
-    // Update time series if it exists
-    if (typeof makePath === 'function') {
-        makePath();
-    }
-    
-    // Update map
-    updateMap(filteredData);
-    
-    // Update any other visualizations
-    updateStatistics(filteredData);
-    }
+        // Update any other visualizations
+        updateStatistics(filteredData);
+        }
     </script>
+</body>
 
-    <style>
-    /* Add these styles to your existing CSS */
-    .borough-filter,
-    .rider-filter,
-    #subway-toggle {
-    padding: 5px;
-    margin: 5px;
-    display: inline-block;
-    border: #d05228 solid 2px;
-    color: #d05228;
-    background-color: white;
-    cursor: pointer;
-    }
-
-    .borough-filter:hover,
-    .rider-filter:hover,
-    #subway-toggle:hover {
-    background-color: #ffc63d;
-    }
-
-    #sidebar h4 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    }
-
-    #borough-filters,
-    #rider-filters,
-    #overlay-controls {
-    margin-bottom: 15px;
-    }
-    </style> 
 </html>
