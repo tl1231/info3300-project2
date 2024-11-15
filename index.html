@@ -38,6 +38,19 @@
         #overlay-controls {
         margin-bottom: 15px;
         }
+        
+        /* Add these styles for the time slider */
+        .brush .selection {
+            fill: #ffc63d;
+            fill-opacity: 0.3;
+            stroke: #d05228;
+        }
+        
+        #control {
+            background-color: #ffcebf;
+            padding: 10px;
+            margin: 10px;
+        }
     </style> 
 </head>
 <body>
@@ -65,6 +78,13 @@
         <!-- Subway Overlay Toggle -->
         <h4><strong>Overlay</strong> Subway Routes</h4>
         <div id="overlay-controls"></div>
+    </div>
+
+    <!-- Add this right after your existing sidebar div -->
+    <div class="detailscolor">
+        <h4><strong>Time Slider</strong> & Number of Rides Over Time</h4>
+        <p>Narrow the dataset according to time ranges with the slider</p>
+        <div id="control"></div>
     </div>
 
     <script>
@@ -174,28 +194,92 @@
         }
         }
 
-        // Update filtered data based on all current filters
+        // Create the time slider immediately after the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Time variables
+            let time_start = new Date(2013, 0, 1);
+            let time_end = new Date(2023, 11, 31);
+            let min_date = new Date(2013, 0, 1);
+            let max_date = new Date(2023, 11, 31);
+
+            // Time slider setup
+            const control = d3.select("#control");
+            const controlWidth = 800;
+            const controlHeight = 100;
+
+            const controlSvg = control.append("svg")
+                .attr("width", controlWidth)
+                .attr("height", controlHeight);
+
+            // Create scales for the time slider
+            const timeScale = d3.scaleTime()
+                .domain([min_date, max_date])
+                .range([50, controlWidth - 50]);
+
+            // Create the brush for time selection
+            const myBrush = d3.brushX()
+                .extent([[50, 25], [controlWidth - 50, 75]])
+                .on("brush", brushed)
+                .on("end", brushended);
+
+            // Add brush to SVG
+            controlSvg.append("g")
+                .attr("class", "brush")
+                .call(myBrush);
+
+            // Add axis with year and month formatting
+            const timeAxis = d3.axisBottom(timeScale)
+                .tickFormat(d3.timeFormat("%Y %b"))
+                .ticks(d3.timeMonth.every(6));
+
+            controlSvg.append("g")
+                .attr("transform", `translate(0, 75)`)
+                .call(timeAxis)
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", "rotate(-45)");
+
+            // Brush event handlers
+            function brushed(event) {
+                if (!event.selection) return;
+                const [x0, x1] = event.selection;
+                time_start = timeScale.invert(x0);
+                time_end = timeScale.invert(x1);
+                console.log("Time range:", time_start, time_end); // For debugging
+            }
+
+            function brushended(event) {
+                if (!event.selection) {
+                    time_start = min_date;
+                    time_end = max_date;
+                    console.log("Reset time range"); // For debugging
+                }
+            }
+        });
+
+        // Update the updateFiltered function to handle hour-level filtering
         function updateFiltered() {
-        let filteredData = citiBikeData;
-        
-        // Apply borough filter
-        if (filteredBorough.length > 0) {
-            filteredData = filteredData.filter(d => filteredBorough.includes(d.borough));
-        }
-        
-        // Apply rider type filter
-        if (filteredRiderType.length > 0) {
-            filteredData = filteredData.filter(d => filteredRiderType.includes(d.riderType));
-        }
-        
-        // Apply time filter if it exists
-        if (time_start !== min_date || time_end !== max_date) {
-            filteredData = filteredData.filter(d => 
-            d.date >= time_start && d.date <= time_end
-            );
-        }
-        
-        updateVisualization(filteredData);
+            let filteredData = citiBikeData;
+            
+            // Apply borough filter
+            if (filteredBorough.length > 0) {
+                filteredData = filteredData.filter(d => filteredBorough.includes(d.borough));
+            }
+            
+            // Apply rider type filter
+            if (filteredRiderType.length > 0) {
+                filteredData = filteredRiderType.filter(d => filteredRiderType.includes(d.riderType));
+            }
+            
+            // Apply time filter - assuming data has hour and month properties
+            filteredData = filteredData.filter(d => {
+                const date = new Date(2013, d.month - 1, 1, d.hour);
+                return date >= time_start && date <= time_end;
+            });
+            
+            updateVisualization(filteredData);
         }
 
         // Clear all filters
