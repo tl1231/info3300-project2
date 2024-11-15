@@ -173,7 +173,7 @@
     </main>
    
     <script>
-        // --------setting up filter options and selections
+        // --------setting up filter options and selections-------------
         const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
         const riderTypes = ["Member", "Casual"];
         const bikeTypes = ["Regular", "E-Bike"];
@@ -188,119 +188,127 @@
         const min_date = new Date(2013, 0, 1);
         const max_date = new Date(2023, 11, 31);
 
-        // Create filter sections
-        let boroughFilters = d3.select("#borough-filters");
-        let riderFilters = d3.select("#rider-filters");
-        let bikeFilters = d3.select("#bike-filters");
-        let overlayControls = d3.select("#overlay-controls");
+        function drawFilters (){
+            // Create filter sections
+            let boroughFilters = d3.select("#borough-filters");
+            let riderFilters = d3.select("#rider-filters");
+            let bikeFilters = d3.select("#bike-filters");
+            let overlayControls = d3.select("#overlay-controls");
 
-        // Add clear button
-        clearArea = d3.select("#clearArea")
-        let clearButton = clearArea
-        .append("button")
-        .attr("id", "clear")
-        .text("Reset Visualizations")
-        .on("click", clear);
-
-        // Create borough filter buttons
-        boroughs.forEach((borough) => {
-        boroughFilters
+            // Add clear button
+            clearArea = d3.select("#clearArea")
+            let clearButton = clearArea
             .append("button")
-            .attr("name", borough)
-            .attr("id", borough)
-            .attr("class", "borough-filter")
-            .attr("clicked", false)
-            .text(borough)
-            .on("click", function() { filterClick(this, 'borough'); });
-        });
+            .attr("id", "clear")
+            .text("Reset Visualizations")
+            .on("click", clear);
 
-        // Create rider type filter buttons
-        riderTypes.forEach((type) => {
-        riderFilters
-            .append("button")
-            .attr("name", type)
-            .attr("id", type)
-            .attr("class", "rider-filter")
-            .attr("clicked", false)
-            .text(type)
-            .on("click", function() { filterClick(this, 'rider'); });
-        });
+            // Create borough filter buttons
+            boroughs.forEach((borough) => {
+                boroughFilters
+                    .append("button")
+                    .attr("name", borough)
+                    .attr("id", borough)
+                    .attr("class", "borough-filter")
+                    .attr("clicked", false)
+                    .text(borough)
+                    .on("click", function() { filterClick(this, 'borough'); });
+            });
 
-        // Create bike type filter buttons
-        bikeTypes.forEach((type) => {
-        bikeFilters
-            .append("button")
-            .attr("name", type)
-            .attr("id", type)
-            .attr("class", "bike-filter")
-            .attr("clicked", false)
-            .text(type)
-            .on("click", function() { filterClick(this, 'bike'); });
-        });
 
-        // Create subway overlay toggle
-        overlayControls
-        .append("button")
-        .attr("id", "subway-toggle")
-        .attr("clicked", false)
-        .text("Hide Subway Routes") //this should be the starting state
-        .on("click", toggleSubwayOverlay);
+            // Create rider type filter buttons
+                riderTypes.forEach((type) => {
+                    riderFilters
+                        .append("button")
+                        .attr("name", type)
+                        .attr("id", type)
+                        .attr("class", "rider-filter")
+                        .attr("clicked", false)
+                        .text(type)
+                        .on("click", function() { filterClick(this, 'rider'); });
+                });
 
-        // Filter click handler
+            // Create bike type filter buttons
+                bikeTypes.forEach((type) => {
+                    bikeFilters
+                        .append("button")
+                        .attr("name", type)
+                        .attr("id", type)
+                        .attr("class", "bike-filter")
+                        .attr("clicked", false)
+                        .text(type)
+                        .on("click", function() { filterClick(this, 'bike'); });
+                });
+
+            // Create subway overlay toggle
+                overlayControls
+                    .append("button")
+                    .attr("id", "subway-toggle")
+                    .attr("clicked", false)
+                    .text("Hide Subway Routes") //this should be the starting state
+                    .on("click", toggleSubwayOverlay);
+            
+        };
+
+        drawFilters();
+
+
+        // -------------------handling a controller being clicked-----------
+        //filter clicked
         function filterClick(button, filterType) {
-        let fil = d3.select(button);
-        
-        if (filterType === 'borough') {
-            if (fil.attr("clicked") == "true") {
-                filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
-                fil.style("background-color", "white");
-                fil.attr("clicked", false);
+            let fil = d3.select(button);
+            
+            if (filterType === 'borough') {
+                if (fil.attr("clicked") == "true") {
+                    filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
+                    fil.style("background-color", "white");
+                    fil.attr("clicked", false);
+                } else {
+                    filteredBorough.push(fil.attr("name"));
+                    fil.attr("clicked", true);
+                    fil.style("background-color", "#ffc63d");
+                }
+            } else if (filterType === 'rider') {
+                if (fil.attr("clicked") == "true") {
+                    filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
+                    fil.style("background-color", "white");
+                    fil.attr("clicked", false);
+                } else {
+                    filteredRiderType.push(fil.attr("name"));
+                    fil.attr("clicked", true);
+                    fil.style("background-color", "#ffc63d");
+                }
             } else {
-                filteredBorough.push(fil.attr("name"));
-                fil.attr("clicked", true);
-                fil.style("background-color", "#ffc63d");
-            }
-        } else if (filterType === 'rider') {
-            if (fil.attr("clicked") == "true") {
-                filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-                fil.style("background-color", "white");
-                fil.attr("clicked", false);
-            } else {
-                filteredRiderType.push(fil.attr("name"));
-                fil.attr("clicked", true);
-                fil.style("background-color", "#ffc63d");
-            }
-        } else {
-            // if (fil.attr("clicked") == "true") {
-            //     filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-            //     fil.style("background-color", "white");
-            //     fil.attr("clicked", false);
-            // } else {
-            //     filteredRiderType.push(fil.attr("name"));
-            //     fil.attr("clicked", true);
-            //     fil.style("background-color", "#ffc63d");
-            // }
-            console.log("changed bike type")
-        }  
-        
-        // Update the map with current filters and time range
-        updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+                // if (fil.attr("clicked") == "true") {
+                //     filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
+                //     fil.style("background-color", "white");
+                //     fil.attr("clicked", false);
+                // } else {
+                //     filteredRiderType.push(fil.attr("name"));
+                //     fil.attr("clicked", true);
+                //     fil.style("background-color", "#ffc63d");
+                // }
+                console.log("changed bike type")
+            }  
+            
+            // Update the map with current filters and time range
+            updateMap(time_start, time_end, filteredBorough, filteredRiderType);
         }
-
         // Subway overlay toggle handler
         function toggleSubwayOverlay() {
-        let button = d3.select("#subway-toggle");
-        showSubwayOverlay = !showSubwayOverlay;
-        
-        if (showSubwayOverlay) {
-            button.style("background-color", "#ffc63d")
-            .text("Hide Subway Routes");
-            showSubwayLines();
-        } else {
-            button.style("background-color", "white")
-            .text("Show Subway Routes");
-            hideSubwayLines();
-        }
+            let button = d3.select("#subway-toggle");
+            console.log(button)
+            showSubwayOverlay = !showSubwayOverlay;
+            
+            if (showSubwayOverlay) {
+                button.style("background-color", "#ffc63d")
+                .text("Hide Subway Routes");
+                showSubwayLines();
+            } else {
+                button.style("background-color", "white")
+                .text("Show Subway Routes");
+                hideSubwayLines();
+            }
         }
 
         // Create the time slider immediately after the page loads
