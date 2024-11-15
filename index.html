@@ -141,18 +141,15 @@
             fil.style("background-color", "#ffc63d");
           }
         } else {
-          // Handle rider type filter (single selection)
+          // Handle rider type filter (multiple selection)
           if (fil.attr("clicked") == "true") {
-            filteredRiderType = null;
+            // Remove rider type from filtered list
+            filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
             fil.style("background-color", "white");
             fil.attr("clicked", false);
           } else {
-            filteredRiderType = fil.attr("name");
-            // Reset other buttons in same category
-            d3.selectAll(buttonClass).each(function() {
-              d3.select(this).style("background-color", "white");
-              d3.select(this).attr("clicked", false);
-            });
+            // Add rider type to filtered list
+            filteredRiderType.push(fil.attr("name"));
             fil.attr("clicked", true);
             fil.style("background-color", "#ffc63d");
           }
@@ -187,8 +184,8 @@
         }
         
         // Apply rider type filter
-        if (filteredRiderType !== null) {
-            filteredData = filteredData.filter(d => d.riderType === filteredRiderType);
+        if (filteredRiderType.length > 0) {
+            filteredData = filteredData.filter(d => filteredRiderType.includes(d.riderType));
         }
         
         // Apply time filter if it exists
@@ -231,7 +228,7 @@
         
         // Reset all filter states
         filteredBorough = [];
-        filteredRiderType = null;
+        filteredRiderType = [];
         time_start = min_date;
         time_end = max_date;
         
