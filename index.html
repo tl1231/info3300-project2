@@ -180,7 +180,7 @@
         // State variables
         let filteredBorough = [];
         let filteredRiderType = [];
-        let showSubwayOverlay = false;
+        let showSubwayOverlay = true;
         let time_start = new Date(2013, 0, 1);
         let time_end = new Date(2023, 11, 31);
         const min_date = new Date(2013, 0, 1);
@@ -228,7 +228,7 @@
         .append("button")
         .attr("id", "subway-toggle")
         .attr("clicked", false)
-        .text("Show Subway Routes")
+        .text("Hide Subway Routes") //this should be the starting state
         .on("click", toggleSubwayOverlay);
 
         // Filter click handler
@@ -390,13 +390,13 @@
         function showSubwayLines() {
         // Add your subway visualization code here
         // For example:
-        map.selectAll(".subway-line")
-            .attr("visibility", "visible");
+            d3.selectAll(".subway")
+                .attr("visibility", "visible");
         }
 
         function hideSubwayLines() {
         // Add your subway hide code here
-        map.selectAll(".subway-line")
+        d3.selectAll(".subway")
             .attr("visibility", "hidden");
         }
 
@@ -434,13 +434,16 @@
             
             try {
                 // Load both datasets
-                const [neighborhoods, bikeData] = await Promise.all([
+                const [neighborhoods, bikeData, subways] = await Promise.all([
                     d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson"),
-                    d3.json("data/counts_by_ntaname.json")
+                    d3.json("data/counts_by_ntaname.json"),
+                    d3.json("data/Subway_Lines.geojson")
+
                 ]);
 
                 // Store data globally
                 neighborhoodFeatures = neighborhoods;
+                subwayFeature = subways;
                 citiBikeData = bikeData;
 
                 // Calculate total rides per neighborhood
@@ -482,6 +485,19 @@
                         const rides = totalRidesByNeighborhood[d.properties.ntaname] || 0;
                         return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`;
                     });
+                const map_subway = mapSvg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`)
+                    .attr("class", "map_subway");
+
+                map_subway.selectAll("path.subway")
+                    .data(subways.features)
+                    .join("path")
+                    .attr("class", "subway")
+                    .attr("d", path)
+                    .attr("fill", 'none')
+                    .attr("stroke", "black")
+                    .attr("stroke-width", "0.3px")
+                    .append("title");
 
                 // Add legend
                 const legendWidth = 200;
