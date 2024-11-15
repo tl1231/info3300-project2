@@ -2,7 +2,48 @@
 <head>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* Add these styles to your existing CSS */
+        body {
+            font-family:Verdana, Geneva, Tahoma, sans-serif;
+            margin: auto;
+            width: 95vw;
+        }
+
+        main {
+            display: flex;
+            flex-direction: row;
+            gap: 64px;
+        }
+
+        #header {
+            padding: 10px;
+        }
+
+        #sidebar {
+            border-style: solid;
+            border-color: #1c299b;
+            border-width: 4px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            text-align: left;
+            width: 225px;
+        }
+
+        #not-sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #not-sidebar h4 {
+            margin-top: 0px;
+        }
+
+        .visualizations {
+            display: flex;
+            flex-direction: row;
+            gap: 40px;
+        }
+
         .gridlines line {
             stroke: #bbb;
         }
@@ -13,41 +54,61 @@
         .borough-filter,
         .rider-filter,
         #subway-toggle {
-        padding: 5px;
-        margin: 5px;
-        display: inline-block;
-        border: #d05228 solid 2px;
-        color: #d05228;
-        background-color: white;
-        cursor: pointer;
+            padding: 5px;
+            margin: 5px;
+            display: inline-block;
+            border: #1c299b solid 2px;
+            color: #1c299b;
+            background-color: white;
+            cursor: pointer;
         }
     
         .borough-filter:hover,
         .rider-filter:hover,
         #subway-toggle:hover {
-        background-color: #ffc63d !important;
+            background-color: #a6ceff !important;
         }
     
         #sidebar h4 {   
-        margin-top: 20px;
-        margin-bottom: 10px;
+            margin-top: 20px;
+            margin-bottom: 10px;
         }
     
         #borough-filters,
         #rider-filters,
         #overlay-controls {
-        margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            width: 50%;
+            margin-bottom: 15px;    
         }
         
+        #subway-toggle {
+            width: 100%;
+        }
+
+        #clear {
+            background-color: white;
+            color: red;
+            border-style: solid;
+            border-color: red;
+            padding: 5px;
+            width: 100%;
+        }
+
+        #clear:hover {
+            background-color: red;
+            color: white;
+        }
         /* Add these styles for the time slider */
         .brush .selection {
-            fill: #ffc63d;
+            fill: #a6ceff;
             fill-opacity: 0.3;
-            stroke: #d05228;
+            stroke: #1c299b;
         }
         
         #control {
-            background-color: #ffcebf;
+            background-color: white;
             padding: 10px;
             margin: 10px;
             width: fit-content;
@@ -59,43 +120,58 @@
     </style> 
 </head>
 <body>
-    <h3>CitiBike Usage in New York City</h3>
-    <p>For our project, we will look at CitiBike usage in New York City neighborhoods and compare the concentration of rides starting at each neighborhood. 
-    We want to see if CitiBikes are an effective alternative means of transportation by visualizing it against the NYC Subway System and the 
-    percentage of people who own a car in each neighborhood tabulation area.</p>
-
+    <div id="header">
+        <h1>CitiBike Usage in New York City</h1>
+        <p>For our project, we will look at CitiBike usage in New York City neighborhoods and compare the concentration of rides starting at each neighborhood. 
+        We want to see if CitiBikes are an effective alternative means of transportation by visualizing it against the NYC Subway System and the 
+        percentage of people who own a car in each neighborhood tabulation area.</p>
+    </div>
+    
     <!-- Choropleth Map SVG Nick was here -->
     
     <!-- Bar Chart SVG -->
 
-    <!-- Filters -->
-    <div id="sidebar" class="detailscolor">
-        <div id="clearArea"></div>
-        
-        <!-- Borough Filter Section -->
-        <h4><strong>Filter</strong> Rides by Borough</h4>
-        <div id="borough-filters"></div>
-        
-        <!-- Rider Type Filter Section -->
-        <h4><strong>Filter</strong> by Rider Type</h4>
-        <div id="rider-filters"></div>
-        
-        <!-- Subway Overlay Toggle -->
-        <h4><strong>Overlay</strong> Subway Routes</h4>
-        <div id="overlay-controls"></div>
-    </div>
+    <main>
+         <!-- Filters -->
+        <div id="sidebar" class="detailscolor">
+            <div id="clearArea"></div>
+            
+            <!-- Borough Filter Section -->
+            <h4><strong>Filter</strong> Rides by Borough</h4>
+            <div id="borough-filters"></div>
+            
+            <!-- Rider Type Filter Section -->
+            <h4><strong>Filter</strong> by Rider Type</h4>
+            <div id="rider-filters"></div>
+            
+            <!-- Subway Overlay Toggle -->
+            <h4><strong>Overlay</strong> Subway Routes</h4>
+            <div id="overlay-controls"></div>
+        </div>
 
-    <!-- Add this right after your existing sidebar div -->
-    <div class="detailscolor">
-        <h4><strong>Time Slider</strong> & Number of Rides Over Time</h4>
-        <p>Narrow the dataset according to time ranges with the slider</p>
-        <div id="control"></div>
-    </div>
+        <div id="not-sidebar">
+             <!-- Add this right after your existing sidebar div -->
+            <div class="detailscolor">
+                <h4><strong>Time Slider</strong> & Number of Rides Over Time</h4>
+                <p>Narrow the dataset according to time ranges with the slider</p>
+                <div id="control"></div>
+            </div>
 
-    <div style="margin:0 auto">
-        <svg id="citibike_map" height="600" width="700" style="background: rgb(222, 220, 220); margin-top:20px; border-radius:10px"></svg>
-    </div>
+            <div class="visualizations">
+                <div style="margin:0 auto">
+                    <svg id="citibike_map" height="600" width="700" style="background: rgb(237, 237, 237); margin-top:20px; border-radius:10px"></svg>
+                </div>
 
+                <div style="margin:0 auto">
+                    <h4><strong>Barchart</strong></h4>
+                    <svg id="barchart" height="600" width="700"></svg>
+                </div>
+            </div>
+    
+        </div>
+       
+    </main>
+   
     <script>
         // Constants
         const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "New Jersey"];
