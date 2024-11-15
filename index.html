@@ -105,6 +105,10 @@
         let filteredBorough = [];
         let filteredRiderType = [];
         let showSubwayOverlay = false;
+        let time_start = new Date(2013, 0, 1);
+        let time_end = new Date(2023, 11, 31);
+        const min_date = new Date(2013, 0, 1);
+        const max_date = new Date(2023, 11, 31);
 
         // Create filter sections
         let boroughFilters = d3.select("#borough-filters");
@@ -154,37 +158,31 @@
         // Filter click handler
         function filterClick(button, filterType) {
         let fil = d3.select(button);
-        let buttonClass = filterType === 'borough' ? '.borough-filter' : '.rider-filter';
         
         if (filterType === 'borough') {
-          // Handle borough filters (multiple selection)
-          if (fil.attr("clicked") == "true") {
-            // Remove borough from filtered list
-           filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
-            fil.style("background-color", "white");
-            fil.attr("clicked", false);
-          } else {
-            // Add borough to filtered list
-            filteredBorough.push(fil.attr("name"));
-            fil.attr("clicked", true);
-            fil.style("background-color", "#ffc63d");
-          }
+            if (fil.attr("clicked") == "true") {
+                filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
+                fil.style("background-color", "white");
+                fil.attr("clicked", false);
+            } else {
+                filteredBorough.push(fil.attr("name"));
+                fil.attr("clicked", true);
+                fil.style("background-color", "#ffc63d");
+            }
         } else {
-          // Handle rider type filter (multiple selection)
-          if (fil.attr("clicked") == "true") {
-            // Remove rider type from filtered list
-            filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-            fil.style("background-color", "white");
-            fil.attr("clicked", false);
-          } else {
-            // Add rider type to filtered list
-            filteredRiderType.push(fil.attr("name"));
-            fil.attr("clicked", true);
-            fil.style("background-color", "#ffc63d");
-          }
+            if (fil.attr("clicked") == "true") {
+                filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
+                fil.style("background-color", "white");
+                fil.attr("clicked", false);
+            } else {
+                filteredRiderType.push(fil.attr("name"));
+                fil.attr("clicked", true);
+                fil.style("background-color", "#ffc63d");
+            }
         }
         
-        updateFiltered();
+        // Update the map with current filters and time range
+        updateMap(time_start, time_end, filteredBorough, filteredRiderType);
         }
 
         // Subway overlay toggle handler
@@ -258,11 +256,14 @@
 
             // Brush event handlers
             function brushed(event) {
-                if (!event.selection) return;
-                const [x0, x1] = event.selection;
-                time_start = timeScale.invert(x0);
-                time_end = timeScale.invert(x1);
-                console.log("Time range:", time_start, time_end); // For debugging
+                if (event.selection) {
+                    // Get the selected time range
+                    time_start = timeScale.invert(event.selection[0]);
+                    time_end = timeScale.invert(event.selection[1]);
+                    
+                    // Update the map with new time range
+                    updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+                }
             }
 
             function brushended(event) {
@@ -276,63 +277,37 @@
 
         // Update the updateFiltered function to handle hour-level filtering
         function updateFiltered() {
-            let filteredData = citiBikeData;
-            
-            // Apply borough filter
-            if (filteredBorough.length > 0) {
-                filteredData = filteredData.filter(d => filteredBorough.includes(d.borough));
-            }
-            
-            // Apply rider type filter
-            if (filteredRiderType.length > 0) {
-                filteredData = filteredRiderType.filter(d => filteredRiderType.includes(d.riderType));
-            }
-            
-            // Apply time filter - assuming data has hour and month properties
-            filteredData = filteredData.filter(d => {
-                const date = new Date(2013, d.month - 1, 1, d.hour);
-                return date >= time_start && date <= time_end;
-            });
-            
-            updateVisualization(filteredData);
+            // Update the map with current filters and time range
+            updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+            // ... rest of your updateFiltered code ...
         }
 
         // Clear all filters
         function clear() {
-        // Reset borough filters
-        d3.selectAll(".borough-filter")
-            .each(function() {
-            d3.select(this)
-                .style("background-color", "white")
-                .attr("clicked", false);
-            });
-        
-        // Reset rider type filters
-        d3.selectAll(".rider-filter")
-            .each(function() {
-            d3.select(this)
-                .style("background-color", "white")
-                .attr("clicked", false);
-            });
+            // Reset time variables
+            time_start = min_date;
+            time_end = max_date;
             
-        // Reset subway overlay
-        if (showSubwayOverlay) {
-            toggleSubwayOverlay();
-        }
-        
-        // Reset time brush if it exists
-        if (typeof myBrush !== 'undefined') {
-            d3.select("g.brush").call(myBrush.move, null);
-        }
-        
-        // Reset all filter states
-        filteredBorough = [];
-        filteredRiderType = [];
-        time_start = min_date;
-        time_end = max_date;
-        
-        // Update visualization
-        updateFiltered();
+            // Reset filters
+            filteredBorough = [];
+            filteredRiderType = [];
+            
+            // Reset button styles
+            d3.selectAll(".borough-filter")
+                .style("background-color", "white")
+                .attr("clicked", false);
+            
+            d3.selectAll(".rider-filter")
+                .style("background-color", "white")
+                .attr("clicked", false);
+            
+            // Update the map
+            updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+            
+            // Reset brush if it exists
+            if (typeof myBrush !== 'undefined') {
+                d3.select("g.brush").call(myBrush.move, null);
+            }
         }
 
         // Functions to show/hide subway lines
@@ -368,6 +343,13 @@
         }
 
         // Simplified version to just show the map
+        let currentColorScale; // Add at top of script
+
+        // Add these global variables at the top of your script
+        let neighborhoodFeatures = null;  // Store neighborhood data globally
+        let citiBikeData = null;         // Store bike data globally
+
+        // Modify the renderMap function
         const renderMap = async function() {
             const mapSvg = d3.select("#citibike_map");
             const width = mapSvg.attr("width");
@@ -381,6 +363,10 @@
                     d3.json("data/counts_by_ntaname.json")
                 ]);
 
+                // Store data globally
+                neighborhoodFeatures = neighborhoods;
+                citiBikeData = bikeData;
+
                 // Calculate total rides per neighborhood
                 const totalRidesByNeighborhood = {};
                 Object.entries(bikeData).forEach(([neighborhood, counts]) => {
@@ -390,7 +376,10 @@
                 // Create color scale
                 const colorScale = d3.scaleSequential(d3.interpolateBlues)
                     .domain([0, d3.max(Object.values(totalRidesByNeighborhood))]);
-
+                
+                // Store color scale globally
+                currentColorScale = colorScale;
+                
                 // Set up projection
                 const projection = d3.geoMercator()
                     .fitSize([width - margin.left - margin.right, 
@@ -412,7 +401,6 @@
                     })
                     .attr("stroke", "white")
                     .attr("stroke-width", "0.5px")
-                    // Add hover effect to show neighborhood name and ride count
                     .append("title")
                     .text(d => {
                         const rides = totalRidesByNeighborhood[d.properties.ntaname] || 0;
@@ -422,68 +410,137 @@
                 // Add legend
                 const legendWidth = 200;
                 const legendHeight = 10;
-
-                const legendScale = d3.scaleLinear()
-                    .domain(colorScale.domain())
-                    .range([0, legendWidth]);
-
-                const legendAxis = d3.axisBottom(legendScale)
-                    .ticks(5)
-                    .tickFormat(d3.format(",.0f"));
-
                 const legend = mapSvg.append("g")
                     .attr("transform", `translate(${margin.left}, ${height - margin.bottom - 40})`);
-
-                legend.append("g")
-                    .call(legendAxis);
 
                 // Create gradient for legend
                 const defs = mapSvg.append("defs");
                 const linearGradient = defs.append("linearGradient")
-                    .attr("id", "legend-gradient")
-                    .attr("x1", "0%")
-                    .attr("x2", "100%")
-                    .attr("y1", "0%")
-                    .attr("y2", "0%");
+                    .attr("id", "legend-gradient");
 
-                linearGradient.selectAll("stop")
-                    .data(colorScale.ticks().map((t, i, n) => ({ 
-                        offset: `${i*100/n.length}%`,
-                        color: colorScale(t) 
-                    })))
-                    .enter()
-                    .append("stop")
-                    .attr("offset", d => d.offset)
-                    .attr("stop-color", d => d.color);
+                // Add legend axis
+                legend.append("g")
+                    .attr("class", "legend-axis");
 
-                legend.append("rect")
-                    .attr("width", legendWidth)
-                    .attr("height", legendHeight)
-                    .style("fill", "url(#legend-gradient)");
+                // Initial legend update
+                updateLegend(colorScale);
 
             } catch (error) {
                 console.error("Error loading or rendering map:", error);
             }
         };
 
-        // Initialize the map
-        renderMap();
+        // Initialize everything
+        renderMap().then(() => {
+            console.log("Map initialized");
+        });
 
-        let citiBikeData = []; // Initialize empty array at the top of your script
-
-        // Load CitiBike data
-        async function loadCitiBikeData() {
-            try {
-                citiBikeData = await d3.json("data/counts_by_ntaname.json");
-            } catch (error) {
-                console.error("Error loading CitiBike data:", error);
+        // Modify the updateMap function
+        function updateMap(timeStart, timeEnd, boroughFilter, riderFilter) {
+            // Check if data is loaded
+            if (!neighborhoodFeatures || !citiBikeData) {
+                console.log("Data not yet loaded");
+                return;
             }
+
+            const mapSvg = d3.select("#citibike_map");
+            
+            // Calculate filtered rides for each neighborhood
+            const filteredRidesByNeighborhood = {};
+            
+            Object.entries(citiBikeData).forEach(([neighborhood, counts]) => {
+                let totalRides = 0;
+                
+                Object.entries(counts).forEach(([key, value]) => {
+                    const [year, month, riderType, bikeType] = key.split('_');
+                    const date = new Date(2013 + parseInt(year), parseInt(month) - 1);
+                    
+                    if (date >= timeStart && date <= timeEnd) {
+                        const isRiderTypeMatch = riderFilter.length === 0 || 
+                            (riderType === 'c' && riderFilter.includes('Casual')) ||
+                            (riderType === 'm' && riderFilter.includes('Member'));
+                        
+                        if (isRiderTypeMatch) {
+                            totalRides += value;
+                        }
+                    }
+                });
+                
+                filteredRidesByNeighborhood[neighborhood] = totalRides;
+            });
+            
+            // Update color scale with new data
+            const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, d3.max(Object.values(filteredRidesByNeighborhood))]);
+            
+            // Update map colors
+            mapSvg.selectAll("path")
+                .data(neighborhoodFeatures.features)  // Rebind the data
+                .join("path")
+                .transition()
+                .duration(200)
+                .attr("fill", d => {
+                    const rides = filteredRidesByNeighborhood[d.properties.ntaname] || 0;
+                    return colorScale(rides);
+                });
+
+            // Update tooltips
+            mapSvg.selectAll("path")
+                .select("title")
+                .text(d => {
+                    const rides = filteredRidesByNeighborhood[d.properties.ntaname] || 0;
+                    return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`;
+                });
+            
+            // Update legend
+            updateLegend(colorScale);
         }
 
-        // Call both functions
-        Promise.all([renderMap(), loadCitiBikeData()]).then(() => {
-            console.log("All data loaded");
-        });
+        // Add this function to update the legend
+        function updateLegend(colorScale) {
+            const mapSvg = d3.select("#citibike_map");
+            const legendWidth = 200;
+            
+            const legendScale = d3.scaleLinear()
+                .domain(colorScale.domain())
+                .range([0, legendWidth]);
+            
+            const legendAxis = d3.axisBottom(legendScale)
+                .ticks(5)
+                .tickFormat(d3.format(",.0f"));
+            
+            mapSvg.select(".legend-axis")
+                .transition()
+                .duration(200)
+                .call(legendAxis);
+            
+            // Update gradient
+            const linearGradient = mapSvg.select("#legend-gradient");
+            
+            linearGradient.selectAll("stop")
+                .data(colorScale.ticks().map((t, i, n) => ({ 
+                    offset: `${i*100/n.length}%`,
+                    color: colorScale(t) 
+                })))
+                .join("stop")
+                .attr("offset", d => d.offset)
+                .attr("stop-color", d => d.color);
+        }
+
+        // Modify your existing time slider callback
+        function timeSliderCallback(timeStart, timeEnd) {
+            // Update the map with new time range
+            updateMap(timeStart, timeEnd, filteredBorough, filteredRiderType);
+            // ... your existing time slider code ...
+        }
+
+        // Modify your existing filter click handler
+        function filterClick(button, filterType) {
+            // ... your existing filter code ...
+            
+            // Update the map with new filters
+            updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+        }
     </script>
 </body>
 
