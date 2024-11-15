@@ -375,9 +375,22 @@
             const margin = { top: 20, right: 20, bottom: 20, left: 20 };
             
             try {
-                // Updated path to point to the data folder
-                const neighborhoods = await d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson");
-                
+                // Load both datasets
+                const [neighborhoods, bikeData] = await Promise.all([
+                    d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson"),
+                    d3.json("data/counts_by_ntaname.json")
+                ]);
+
+                // Calculate total rides per neighborhood
+                const totalRidesByNeighborhood = {};
+                Object.entries(bikeData).forEach(([neighborhood, counts]) => {
+                    totalRidesByNeighborhood[neighborhood] = Object.values(counts).reduce((a, b) => a + b, 0);
+                });
+
+                // Create color scale
+                const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                    .domain([0, d3.max(Object.values(totalRidesByNeighborhood))]);
+
                 // Set up projection
                 const projection = d3.geoMercator()
                     .fitSize([width - margin.left - margin.right, 
@@ -393,9 +406,60 @@
                     .data(neighborhoods.features)
                     .join("path")
                     .attr("d", path)
-                    .attr("fill", "#ccc")
+                    .attr("fill", d => {
+                        const rides = totalRidesByNeighborhood[d.properties.ntaname] || 0;
+                        return colorScale(rides);
+                    })
                     .attr("stroke", "white")
-                    .attr("stroke-width", "0.5px");
+                    .attr("stroke-width", "0.5px")
+                    // Add hover effect to show neighborhood name and ride count
+                    .append("title")
+                    .text(d => {
+                        const rides = totalRidesByNeighborhood[d.properties.ntaname] || 0;
+                        return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`;
+                    });
+
+                // Add legend
+                const legendWidth = 200;
+                const legendHeight = 10;
+
+                const legendScale = d3.scaleLinear()
+                    .domain(colorScale.domain())
+                    .range([0, legendWidth]);
+
+                const legendAxis = d3.axisBottom(legendScale)
+                    .ticks(5)
+                    .tickFormat(d3.format(",.0f"));
+
+                const legend = mapSvg.append("g")
+                    .attr("transform", `translate(${margin.left}, ${height - margin.bottom - 40})`);
+
+                legend.append("g")
+                    .call(legendAxis);
+
+                // Create gradient for legend
+                const defs = mapSvg.append("defs");
+                const linearGradient = defs.append("linearGradient")
+                    .attr("id", "legend-gradient")
+                    .attr("x1", "0%")
+                    .attr("x2", "100%")
+                    .attr("y1", "0%")
+                    .attr("y2", "0%");
+
+                linearGradient.selectAll("stop")
+                    .data(colorScale.ticks().map((t, i, n) => ({ 
+                        offset: `${i*100/n.length}%`,
+                        color: colorScale(t) 
+                    })))
+                    .enter()
+                    .append("stop")
+                    .attr("offset", d => d.offset)
+                    .attr("stop-color", d => d.color);
+
+                legend.append("rect")
+                    .attr("width", legendWidth)
+                    .attr("height", legendHeight)
+                    .style("fill", "url(#legend-gradient)");
 
             } catch (error) {
                 console.error("Error loading or rendering map:", error);
