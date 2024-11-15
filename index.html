@@ -50,6 +50,11 @@
             background-color: #ffcebf;
             padding: 10px;
             margin: 10px;
+            width: fit-content;
+        }
+
+        .detailscolor {
+            width: fit-content;
         }
     </style> 
 </head>
@@ -202,23 +207,29 @@
             let min_date = new Date(2013, 0, 1);
             let max_date = new Date(2023, 11, 31);
 
-            // Time slider setup
+            // Time slider setup with adjusted dimensions
             const control = d3.select("#control");
-            const controlWidth = 800;
-            const controlHeight = 100;
+            const controlWidth = 600;
+            const controlHeight = 40;  // Reduced from 80
+            const margin = {
+                top: 5,     // Reduced from 10
+                right: 30, 
+                bottom: 50, 
+                left: 30
+            };
 
             const controlSvg = control.append("svg")
                 .attr("width", controlWidth)
-                .attr("height", controlHeight);
+                .attr("height", controlHeight + margin.bottom);  // Total height is now 90px (40 + 50)
 
             // Create scales for the time slider
             const timeScale = d3.scaleTime()
                 .domain([min_date, max_date])
-                .range([50, controlWidth - 50]);
+                .range([margin.left, controlWidth - margin.right]);
 
-            // Create the brush for time selection
+            // Create the brush with shorter height
             const myBrush = d3.brushX()
-                .extent([[50, 25], [controlWidth - 50, 75]])
+                .extent([[margin.left, margin.top], [controlWidth - margin.right, controlHeight - margin.top]])
                 .on("brush", brushed)
                 .on("end", brushended);
 
@@ -233,7 +244,7 @@
                 .ticks(d3.timeMonth.every(6));
 
             controlSvg.append("g")
-                .attr("transform", `translate(0, 75)`)
+                .attr("transform", `translate(0, ${controlHeight})`)
                 .call(timeAxis)
                 .selectAll("text")
                 .style("text-anchor", "end")
