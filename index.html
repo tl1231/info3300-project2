@@ -25,10 +25,10 @@
         .borough-filter:hover,
         .rider-filter:hover,
         #subway-toggle:hover {
-        background-color: #ffc63d;
+        background-color: #ffc63d !important;
         }
     
-        #sidebar h4 {
+        #sidebar h4 {   
         margin-top: 20px;
         margin-bottom: 10px;
         }
@@ -69,12 +69,12 @@
 
     <script>
         // Constants
-        const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
+        const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "New Jersey"];
         const riderTypes = ["Member", "Casual"];
 
         // State variables
-        let filteredBorough = null;
-        let filteredRiderType = null;
+        let filteredBorough = [];
+        let filteredRiderType = [];
         let showSubwayOverlay = false;
 
         // Create filter sections
@@ -127,31 +127,35 @@
         let fil = d3.select(button);
         let buttonClass = filterType === 'borough' ? '.borough-filter' : '.rider-filter';
         
-        if (fil.attr("clicked") == "true") {
-            // Deselect current filter
-            if (filterType === 'borough') {
-            filteredBorough = null;
-            } else {
-            filteredRiderType = null;
-            }
+        if (filterType === 'borough') {
+          // Handle borough filters (multiple selection)
+          if (fil.attr("clicked") == "true") {
+            // Remove borough from filtered list
+           filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
             fil.style("background-color", "white");
             fil.attr("clicked", false);
-        } else {
-            // Select new filter
-            if (filterType === 'borough') {
-            filteredBorough = fil.attr("name");
-            } else {
-            filteredRiderType = fil.attr("name");
-            }
-            
-            // Reset other buttons in same category
-            d3.selectAll(buttonClass).each(function() {
-            d3.select(this).style("background-color", "white");
-            d3.select(this).attr("clicked", false);
-            });
-            
+          } else {
+            // Add borough to filtered list
+            filteredBorough.push(fil.attr("name"));
             fil.attr("clicked", true);
             fil.style("background-color", "#ffc63d");
+          }
+        } else {
+          // Handle rider type filter (single selection)
+          if (fil.attr("clicked") == "true") {
+            filteredRiderType = null;
+            fil.style("background-color", "white");
+            fil.attr("clicked", false);
+          } else {
+            filteredRiderType = fil.attr("name");
+            // Reset other buttons in same category
+            d3.selectAll(buttonClass).each(function() {
+              d3.select(this).style("background-color", "white");
+              d3.select(this).attr("clicked", false);
+            });
+            fil.attr("clicked", true);
+            fil.style("background-color", "#ffc63d");
+          }
         }
         
         updateFiltered();
@@ -178,8 +182,8 @@
         let filteredData = citiBikeData;
         
         // Apply borough filter
-        if (filteredBorough !== null) {
-            filteredData = filteredData.filter(d => d.borough === filteredBorough);
+        if (filteredBorough.length > 0) {
+            filteredData = filteredData.filter(d => filteredBorough.includes(d.borough));
         }
         
         // Apply rider type filter
@@ -226,7 +230,7 @@
         }
         
         // Reset all filter states
-        filteredBorough = null;
+        filteredBorough = [];
         filteredRiderType = null;
         time_start = min_date;
         time_end = max_date;
