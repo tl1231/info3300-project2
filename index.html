@@ -92,6 +92,10 @@
         <div id="control"></div>
     </div>
 
+    <div style="margin:0 auto">
+        <svg id="citibike_map" height="600" width="700" style="background: rgb(222, 220, 220); margin-top:20px; border-radius:10px"></svg>
+    </div>
+
     <script>
         // Constants
         const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "New Jersey"];
@@ -362,6 +366,60 @@
         // Update any other visualizations
         updateStatistics(filteredData);
         }
+
+        // Simplified version to just show the map
+        const renderMap = async function() {
+            const mapSvg = d3.select("#citibike_map");
+            const width = mapSvg.attr("width");
+            const height = mapSvg.attr("height");
+            const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+            
+            try {
+                // Updated path to point to the data folder
+                const neighborhoods = await d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson");
+                
+                // Set up projection
+                const projection = d3.geoMercator()
+                    .fitSize([width - margin.left - margin.right, 
+                             height - margin.top - margin.bottom], 
+                             neighborhoods);
+                const path = d3.geoPath().projection(projection);
+
+                // Draw map
+                const map = mapSvg.append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                map.selectAll("path")
+                    .data(neighborhoods.features)
+                    .join("path")
+                    .attr("d", path)
+                    .attr("fill", "#ccc")
+                    .attr("stroke", "white")
+                    .attr("stroke-width", "0.5px");
+
+            } catch (error) {
+                console.error("Error loading or rendering map:", error);
+            }
+        };
+
+        // Initialize the map
+        renderMap();
+
+        let citiBikeData = []; // Initialize empty array at the top of your script
+
+        // Load CitiBike data
+        async function loadCitiBikeData() {
+            try {
+                citiBikeData = await d3.json("data/counts_by_ntaname.json");
+            } catch (error) {
+                console.error("Error loading CitiBike data:", error);
+            }
+        }
+
+        // Call both functions
+        Promise.all([renderMap(), loadCitiBikeData()]).then(() => {
+            console.log("All data loaded");
+        });
     </script>
 </body>
 
