@@ -29,12 +29,12 @@
             /* width: 525px; */
         }
 
-        #not-sidebar {
+        #main_content {
             display: flex;
             flex-direction: column;
         }
 
-        #not-sidebar h4 {
+        #main_content h4 {
             margin-top: 0px;
         }
 
@@ -53,6 +53,7 @@
 
         .borough-filter,
         .rider-filter,
+        .bike-filter,
         #subway-toggle {
             padding: 5px;
             margin: 5px;
@@ -126,11 +127,6 @@
         We want to see if CitiBikes are an effective alternative means of transportation by visualizing it against the NYC Subway System and the 
         percentage of people who own a car in each neighborhood tabulation area.</p>
     </div>
-    
-    <!-- Choropleth Map  -->
-    
-    <!-- Bar Chart SVG -->
-
     <main>
          <!-- Filters -->
         <div id="sidebar" class="detailscolor">
@@ -143,13 +139,17 @@
             <!-- Rider Type Filter Section -->
             <h4><strong>Filter</strong> by Rider Type</h4>
             <div id="rider-filters"></div>
+
+            <!-- Rider Type Filter Section -->
+            <h4><strong>Filter</strong> by Bike Type</h4>
+            <div id="bike-filters"></div>
             
             <!-- Subway Overlay Toggle -->
             <h4><strong>Overlay</strong> Subway Routes</h4>
             <div id="overlay-controls"></div>
         </div>
 
-        <div id="not-sidebar">
+        <div id="main_content">
              <!-- Add this right after your existing sidebar div -->
             <div class="detailscolor">
                 <h4><strong>Time Slider</strong> & Number of Rides Over Time</h4>
@@ -173,13 +173,15 @@
     </main>
    
     <script>
-        // Constants
-        const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx", "New Jersey"];
+        // --------setting up filter options and selections
+        const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
         const riderTypes = ["Member", "Casual"];
+        const bikeTypes = ["Regular", "E-Bike"];
 
         // State variables
-        let filteredBorough = [];
-        let filteredRiderType = [];
+        let filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
+        let filteredRiderType = ["Member", "Casual"];
+        let filteredBikeType = ["Regular, E-Bike"];
         let showSubwayOverlay = true;
         let time_start = new Date(2013, 0, 1);
         let time_end = new Date(2023, 11, 31);
@@ -189,6 +191,7 @@
         // Create filter sections
         let boroughFilters = d3.select("#borough-filters");
         let riderFilters = d3.select("#rider-filters");
+        let bikeFilters = d3.select("#bike-filters");
         let overlayControls = d3.select("#overlay-controls");
 
         // Add clear button
@@ -223,6 +226,18 @@
             .on("click", function() { filterClick(this, 'rider'); });
         });
 
+        // Create bike type filter buttons
+        bikeTypes.forEach((type) => {
+        bikeFilters
+            .append("button")
+            .attr("name", type)
+            .attr("id", type)
+            .attr("class", "bike-filter")
+            .attr("clicked", false)
+            .text(type)
+            .on("click", function() { filterClick(this, 'bike'); });
+        });
+
         // Create subway overlay toggle
         overlayControls
         .append("button")
@@ -245,7 +260,7 @@
                 fil.attr("clicked", true);
                 fil.style("background-color", "#ffc63d");
             }
-        } else {
+        } else if (filterType === 'rider') {
             if (fil.attr("clicked") == "true") {
                 filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
                 fil.style("background-color", "white");
@@ -255,7 +270,18 @@
                 fil.attr("clicked", true);
                 fil.style("background-color", "#ffc63d");
             }
-        }
+        } else {
+            // if (fil.attr("clicked") == "true") {
+            //     filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
+            //     fil.style("background-color", "white");
+            //     fil.attr("clicked", false);
+            // } else {
+            //     filteredRiderType.push(fil.attr("name"));
+            //     fil.attr("clicked", true);
+            //     fil.style("background-color", "#ffc63d");
+            // }
+            console.log("changed bike type")
+        }  
         
         // Update the map with current filters and time range
         updateMap(time_start, time_end, filteredBorough, filteredRiderType);
@@ -363,6 +389,9 @@
             // Reset time variables
             time_start = min_date;
             time_end = max_date;
+            
+            console.log()
+            showSubwayLines();
             
             // Reset filters
             filteredBorough = [];
