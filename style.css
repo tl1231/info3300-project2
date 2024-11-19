@@ -7,7 +7,7 @@ body {
 main {
   display: flex;
   flex-direction: row;
-  gap: 64px;
+  gap: 34px;
 }
 
 #header {
@@ -26,6 +26,7 @@ main {
   /* width: 525px; */
   min-width: 130px;
   height: 100%;
+  margin-top: 0;
 }
 
 #main_content {
@@ -33,9 +34,17 @@ main {
   flex-direction: column;
 }
 
+.mainContentHeaderContainer{
+  display: flex; 
+  gap: 10px;
+  flex-direction: row;
+}
+
+
 #main_content h4 {
   margin-top: 0px;
 }
+
 
 .visualizations {
   display: flex;
@@ -124,4 +133,12 @@ main {
 
 .detailscolor {
   width: fit-content;
+  margin: 0;
+  /* flex: 1; */
+}
+
+.BackgroundInfo{
+  width: 500px;
+  /* flex: 1; */
+  margin: 0;
 }
