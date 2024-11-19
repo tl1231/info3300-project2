@@ -438,31 +438,33 @@ function filterClick(button, filterType) {
     if (filterType === 'borough') {
         if (isClicked) {
             filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
+            fil.style("background-color", "white");
         } else {
             filteredBorough.push(fil.attr("name"));
+            fil.style("background-color", "#ffc63d");
         }
     } else if (filterType === 'rider') {
         if (isClicked) {
             filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
+            fil.style("background-color", "white");
         } else {
             filteredRiderType.push(fil.attr("name"));
-            fil.attr("clicked", true);
             fil.style("background-color", "#ffc63d");
         }
-    } else {
-        // if (fil.attr("clicked") == "true") {
-        //     filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-        //     fil.style("background-color", "white");
-        //     fil.attr("clicked", false);
-        // } else {
-        //     filteredRiderType.push(fil.attr("name"));
-        //     fil.attr("clicked", true);
-        //     fil.style("background-color", "#ffc63d");
-        // }
-        console.log("changed bike type")
-    }  
+    } else if (filterType === 'bike') {
+        if (isClicked) {
+            filteredBikeType = filteredBikeType.filter(t => t !== fil.attr("name"));
+            fil.style("background-color", "white");
+        } else {
+            filteredBikeType.push(fil.attr("name"));
+            fil.style("background-color", "#ffc63d");
+        }
+    }
+
+    // Toggle button state
+    fil.attr("clicked", !isClicked ? "true" : "false");
     
-    // Update the map with current filters and time range
+    // Update visualizations
     updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
     drawBar(hour_start, hour_end, month_start, month_end);
 }
@@ -658,17 +660,6 @@ function timeSliderCallback(timeStart, timeEnd) {
     // ... your existing time slider code ...
 }
 
-// Modify your existing filter click handler
-function filterClick(button, filterType) {
-    // ... your existing filter code ...
 
-
-
-// Toggle button state
-    fil.attr("clicked", !isClicked ? "true" : "false")
-        .style("background-color", !isClicked ? "#ffc63d" : "white");
-    // Update the map with new filters
-    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
-}
 
 
