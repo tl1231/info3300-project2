@@ -15,6 +15,9 @@ let hour_end = 23;
 let month_start = 1;
 let month_end = 12;
 
+let monthBrush;
+let hourBrush;
+
 let bikeDataBoro;  // Declare global variable
 let neighborhoodFeatures;
 let subwayFeature;
@@ -323,13 +326,13 @@ function drawSliders(){
         .range([margin.left, controlWidth - margin.right]);
 
     // Create the month brush
-    const monthBrush = d3.brushX()
+    monthBrush = d3.brushX()
         .extent([[margin.left, margin.top], [controlWidth - margin.right, 30]])
         .on("brush", brushedMonth)
         .on("end", brushendedMonth);
 
-    // Create the hour brush
-    const hourBrush = d3.brushX()
+    // Create the hour brush (remove 'const')
+    hourBrush = d3.brushX()
         .extent([[margin.left, 55], [controlWidth - margin.right, 80]])
         .on("brush", brushedHour)
         .on("end", brushendedHour);
@@ -623,16 +626,23 @@ function clear() {
     filteredRiderType = ["m", "c"];
     filteredBikeType = ["cb", "eb"];
     
-    // Reset all buttons
+    // Reset all buttons to selected state (yellow)
     d3.selectAll(".borough-filter, .rider-filter, .bike-filter")
-        .style("background-color", "white")
-        .attr("clicked", "false");
+        .style("background-color", "#ffc63d")
+        .attr("clicked", "true");
     
-    // Reset time range
+    // Reset time range variables
     hour_start = 0;
     hour_end = 23;
     month_start = 1;
     month_end = 12;
+    
+    // Clear the brushes on both sliders
+    d3.select(".month-brush")
+        .call(monthBrush.move, null);
+    
+    d3.select(".hour-brush")
+        .call(hourBrush.move, null);
     
     // Reset subway toggle
     showSubwayOverlay = false;
@@ -641,9 +651,8 @@ function clear() {
         .text("Show Subway Routes");
     hideSubwayLines();
     
-    // Update visualizations
-    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
-    drawBar(hour_start, hour_end, month_start, month_end);
+    // Update visualizations with reset state
+    updateVisualizations();
 }
 
 // Functions to show/hide subway lines
