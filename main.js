@@ -313,48 +313,110 @@ const renderMap = async function() {
         // Add clear button
         clearArea = d3.select("#clearArea")
         let clearButton = clearArea
-        .append("button")
-        .attr("id", "clear")
-        .text("Reset Visualizations")
-        .on("click", clear);
+                    .append("button")
+                    .attr("id", "clear")
+                    .text("Reset Visualizations")
+                    .on("click", clear);
 
-        // Create borough filter buttons
+        // Create borough filter checkboxes
         boroughs.forEach((borough) => {
-            boroughFilters
-                .append("button")
+            let label = boroughFilters
+                    .append("label")
+                    .attr("class", "filter-label")
+            label  
+                .append("input")
+                .attr("type", "checkbox")
                 .attr("name", borough)
                 .attr("class", "borough-filter")
-                .attr("clicked", "true")  // Start as selected
-                .text(borough)
-                .style("background-color", "#ffc63d")  // Start as selected
-                .on("click", function() { filterClick(this, 'borough'); });
+                .attr("checked", true) // Start as selected
+                .on("change", function () {
+                    filterClick(this, 'borough');
+                });
+                
+            label.append("span").text(borough);
         });
+        // OLD CODE FOR BOROUGH BUTTON FILTER
+            // boroughFilters
+            //     .append("button")
+            //     .attr("name", borough)
+            //     .attr("class", "borough-filter")
+            //     .attr("clicked", "true")  // Start as selected
+            //     .text(borough)
+            //     .style("background-color", "#1c299b")  // Start as selected
+            //     .style("color", "white")
+            //     .on("click", function() { filterClick(this, 'borough'); });
 
-        // Create rider type filter buttons
-            riderTypes.forEach((type) => {
-                riderFilters
-                    .append("button")
-                    .attr("name", type)
-                    .attr("class", "rider-filter")
-                    .attr("clicked", "true")  // Start as selected
-                    .text(type)
-                    .style("background-color", "#ffc63d")  // Start as selected
-                    .on("click", function() { filterClick(this, 'rider'); });
-            });
+        // Create rider type filter checkboxes
+        riderTypes.forEach((type) => {
+            let label = riderFilters
+                    .append("label")
+                    .attr("class", "filter-label")
+            label  
+                .append("input")
+                .attr("type", "checkbox")
+                .attr("name", type)
+                .attr("class", "rider-filter")
+                .attr("checked", true) // Start as selected
+                .on("change", function () {
+                    filterClick(this, 'rider');
+                });
+                
+            label.append("span").text(type);
+        });
+        // OLD CODE FOR RIDER BUTTON FILTER
+            // riderTypes.forEach((type) => {
+            //     riderFilters
+            //         .append("button")
+            //         .attr("name", type)
+            //         .attr("class", "rider-filter")
+            //         .attr("clicked", "true")  // Start as selected
+            //         .text(type)
+            //         .style("background-color", "#ffc63d")  // Start as selected
+            //         .on("click", function() { filterClick(this, 'rider'); });
+            // });
 
-        // Create bike type filter buttons
-            bikeTypes.forEach((type) => {
-                bikeFilters
-                    .append("button")
-                    .attr("name", type)
-                    .attr("class", "bike-filter")
-                    .attr("clicked", "true")  // Start as selected
-                    .text(type)
-                    .style("background-color", "#ffc63d")  // Start as selected
-                    .on("click", function() { filterClick(this, 'bike'); });
-            });
+        // Create bike type filter checkboxes
+        bikeTypes.forEach((type) => {
+            let label = bikeFilters
+                    .append("label")
+                    .attr("class", "filter-label")
+            label  
+                .append("input")
+                .attr("type", "checkbox")
+                .attr("name", type)
+                .attr("class", "bike-filter")
+                .attr("checked", true) // Start as selected
+                .on("change", function () {
+                    filterClick(this, 'bike');
+                });
+                
+            label.append("span").text(type);
+        });
+        // OLD CODE FOR BIKE TYPE BUTTON FILTER
+            // bikeTypes.forEach((type) => {
+            //     bikeFilters
+            //         .append("button")
+            //         .attr("name", type)
+            //         .attr("class", "bike-filter")
+            //         .attr("clicked", "true")  // Start as selected
+            //         .text(type)
+            //         .style("background-color", "#ffc63d")  // Start as selected
+            //         .on("click", function() { filterClick(this, 'bike'); });
+            // });
 
-        // Create subway overlay toggle
+        // Create subway overlay toggle as checkbox
+        // let subwayLabel = overlayControls
+        //     .append("label")
+        //     .attr("class", "filter-label");
+
+        // subwayLabel
+        //     .append("input")
+        //     .attr("type", "checkbox")
+        //     .attr("id", "subway-toggle")
+        //     .on("change", toggleSubwayOverlay);
+        
+        // subwayLabel.append("span").text("Show Subway Routes");
+        // OLD CODE FOR SUBWAY ROUTE TOGGLE 
             overlayControls
                 .append("button")
                 .attr("id", "subway-toggle")
@@ -432,8 +494,10 @@ const renderMap = async function() {
     let barColorScale = drawBar();
 
     //--handling function for the clickers--
-    function filterClick(button, filterType) {
-        let fil = d3.select(button);
+    // function filterClick(button, filterType) {
+    function filterClick(checkbox, filterType) {
+        // let fil = d3.select(button);
+        let fil = d3.select(checkbox);
         let name_map = {
             "Member": "m",
             "Casual": "c",
@@ -442,50 +506,84 @@ const renderMap = async function() {
         }
         
         if (filterType === 'borough') {
-            if (fil.attr("clicked") == "true") {
-                if (data_filter['boros'].includes(fil.attr("name"))) {
-                    data_filter['boros'].splice(data_filter['boros'].indexOf(fil.attr("name")), 1);
-                }
-                fil.style("background-color", "white");
-                fil.attr("clicked", false);
+            if (checkbox.checked) {
+                data_filter['boros'].push(fil.attr("name"));           
             } else {
-                data_filter['boros'].push(fil.attr("name"));
-                fil.attr("clicked", true);
-                fil.style("background-color", "#ffc63d");
+                let index = data_filter['boros'].indexOf(fil.attr("name"));
+                if (index > -1) {
+                    data_filter['boros'].splice(index, 1);
+                }
             }
         } else if (filterType === 'rider') {
-            if (fil.attr("clicked") == "true") {
-              selection_code = name_map[fil.attr("name")];
-              fil.style("background-color", "white");
-              fil.attr("clicked", false);
-              if (data_filter['ride_type'].includes(selection_code)) {
-                data_filter['ride_type'].splice(data_filter['ride_type'].indexOf(selection_code), 1);
-              }
+            let selection_code = name_map[fil.attr("name")];
+            if (checkbox.checked) {
+                if (!data_filter['ride_type'].includes(selection_code)) {
+                    data_filter['ride_type'].push(selection_code);
+                }
             } else {
-              selection_code = name_map[fil.attr("name")];
-              fil.attr("clicked", true);
-              fil.style("background-color", "#ffc63d");
-              if (!data_filter['ride_type'].includes(selection_code)) {
-                data_filter['ride_type'].push(selection_code);
-              };
+                let index = data_filter['ride_type'].indexOf(selection_code);
+                if (index > -1) {
+                    data_filter['ride_type'].splice(index, 1);
+                }
             }
-        } else {
-          if (fil.attr("clicked") == "true") {
-            selection_code = name_map[fil.attr("name")];
-            fil.style("background-color", "white");
-            fil.attr("clicked", false);
-            if (data_filter['bike_type'].includes(selection_code)) {
-              data_filter['bike_type'].splice(data_filter['bike_type'].indexOf(selection_code), 1);
+        } else if (filterType === 'bike') {
+            let selection_code = name_map[fil.attr("name")];
+            if (checkbox.checked) {
+                if (!data_filter['bike_type'].includes(selection_code)) {
+                    data_filter['bike_type'].push(selection_code);
+                }
+            } else {
+                let index = data_filter['bike_type'].indexOf(selection_code);
+                if (index > -1) {
+                    data_filter['bike_type'].splice(index, 1);
+                }
             }
-          } else {
-            selection_code = name_map[fil.attr("name")];
-            fil.attr("clicked", true);
-            fil.style("background-color", "#ffc63d");
-            if (!data_filter['bike_type'].includes(selection_code)) {
-              data_filter['bike_type'].push(selection_code);
-            };
-          }
-        } 
+        }
+        // if (filterType === 'borough') { 
+        //     if (fil.attr("clicked") == "true") {
+        //         if (data_filter['boros'].includes(fil.attr("name"))) {
+        //             data_filter['boros'].splice(data_filter['boros'].indexOf(fil.attr("name")), 1);
+        //         }
+        //         fil.style("background-color", "white");
+        //         fil.attr("clicked", false);
+        //     } else {
+        //         data_filter['boros'].push(fil.attr("name"));
+        //         fil.attr("clicked", true);
+        //         fil.style("background-color", "#ffc63d");
+        //     }
+        // } else if (filterType === 'rider') {
+        //     if (fil.attr("clicked") == "true") {
+        //       selection_code = name_map[fil.attr("name")];
+        //       fil.style("background-color", "white");
+        //       fil.attr("clicked", false);
+        //       if (data_filter['ride_type'].includes(selection_code)) {
+        //         data_filter['ride_type'].splice(data_filter['ride_type'].indexOf(selection_code), 1);
+        //       }
+        //     } else {
+        //       selection_code = name_map[fil.attr("name")];
+        //       fil.attr("clicked", true);
+        //       fil.style("background-color", "#ffc63d");
+        //       if (!data_filter['ride_type'].includes(selection_code)) {
+        //         data_filter['ride_type'].push(selection_code);
+        //       };
+        //     }
+        // } else {
+        //   if (fil.attr("clicked") == "true") {
+        //     selection_code = name_map[fil.attr("name")];
+        //     fil.style("background-color", "white");
+        //     fil.attr("clicked", false);
+        //     if (data_filter['bike_type'].includes(selection_code)) {
+        //       data_filter['bike_type'].splice(data_filter['bike_type'].indexOf(selection_code), 1);
+        //     }
+        //   } else {
+        //     selection_code = name_map[fil.attr("name")];
+        //     fil.attr("clicked", true);
+        //     fil.style("background-color", "#ffc63d");
+        //     if (!data_filter['bike_type'].includes(selection_code)) {
+        //       data_filter['bike_type'].push(selection_code);
+        //     };
+        //   }
+        // } 
         updateMap();
         updateBarChart();
     } 
@@ -635,10 +733,13 @@ const renderMap = async function() {
         }
         
         // Reset all buttons to selected state (yellow)
-        d3.selectAll(".borough-filter, .rider-filter, .bike-filter, #subway-toggle")
-            .style("background-color", "#ffc63d")
-            .attr("clicked", "true");
+        // d3.selectAll(".borough-filter, .rider-filter, .bike-filter, #subway-toggle")
+        //     .style("background-color", "#ffc63d")
+        //     .attr("clicked", "true");
         
+        // Reset all checkboxes to checked state
+        d3.selectAll(".borough-filter, .rider-filter, .bike-filter, #subway-toggle")
+            .property("checked", true);
         
         // Clear the brushes on both sliders
         d3.select(".month-brush")

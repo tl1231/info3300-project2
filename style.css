@@ -18,6 +18,7 @@ main {
   border-style: solid;
   border-color: #1c299b;
   border-width: 4px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -106,8 +107,8 @@ main {
 
 #control {
   background-color: white;
-  padding: 10px;
-  margin: 10px;
+  /* padding: 10px;
+  margin: 10px; */
   width: fit-content;
 }
 
