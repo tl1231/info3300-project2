@@ -12,10 +12,6 @@ let filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
 let filteredRiderType = ["Member", "Casual"];
 let filteredBikeType = ["Regular, E-Bike"];
 let showSubwayOverlay = true;
-let time_start = new Date(2013, 0, 1);
-let time_end = new Date(2023, 11, 31);
-const min_date = new Date(2013, 0, 1);
-const max_date = new Date(2023, 11, 31);
 
 let hour_start = 0;
 let hour_end = 23;
@@ -454,7 +450,7 @@ function filterClick(button, filterType) {
     }  
     
     // Update the map with current filters and time range
-    updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
 }
 // Subway overlay toggle handler
 function toggleSubwayOverlay() {
@@ -477,7 +473,7 @@ function toggleSubwayOverlay() {
 // Update the updateFiltered function to handle hour-level filtering
 function updateFiltered() {
     // Update the map with current filters and time range
-    updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
     // ... rest of your updateFiltered code ...
 }
 
@@ -643,7 +639,7 @@ function updateLegend(colorScale) {
 // Modify your existing time slider callback
 function timeSliderCallback(timeStart, timeEnd) {
     // Update the map with new time range
-    updateMap(timeStart, timeEnd, filteredBorough, filteredRiderType);
+    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
     // ... your existing time slider code ...
 }
 
@@ -657,7 +653,7 @@ function filterClick(button, filterType) {
     fil.attr("clicked", !isClicked ? "true" : "false")
         .style("background-color", !isClicked ? "#ffc63d" : "white");
     // Update the map with new filters
-    updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
 }
 
 
