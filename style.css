@@ -24,6 +24,8 @@ main {
   padding: 20px;
   text-align: left;
   /* width: 525px; */
+  min-width: 130px;
+  height: 100%;
 }
 
 #main_content {
@@ -88,6 +90,8 @@ main {
 
 #subway-toggle {
   width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 #clear {

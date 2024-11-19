@@ -124,7 +124,7 @@ const renderMap = async function() {
         .attr("class", "neighborhood")
         .attr("d", path)
         .attr("fill", d => {
-            const rides = ridesByNeighborhood[d.properties.ntaname] || 0; //totalRidesByNeighborhood
+            const rides = ridesByNeighborhood[d.properties.ntaname] || 0; 
             return colorScale(rides);
         })
         .attr("stroke", "white")
@@ -132,7 +132,7 @@ const renderMap = async function() {
         .append("title")
         .text(d => {
             const rides = ridesByNeighborhood[d.properties.ntaname] || 0;
-            return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`; //totalRidesByNeighborhood
+            return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`; 
         });
 
     subwayLayer.selectAll("path")
@@ -163,46 +163,40 @@ const renderMap = async function() {
 
     //--TIME SLIDER CREATION--
     function drawSliders(){
-        // Time variables
-        let hour_start = 0;
-        let hour_end = 23;
-        let month_start = 1;
-        let month_end = 12;
-
         // Time slider setup with adjusted dimensions
         const control = d3.select("#control");
         const controlWidth = 600;
         const controlHeight = 100;  // Increased to accommodate two sliders
-        const margin = {
+        const slidermargin = {
             top: 5,
             right: 30,
             bottom: 50,
-            left: 30
+            left: 120
         };
 
         const controlSvg = control.append("svg")
             .attr("width", controlWidth)
-            .attr("height", controlHeight + margin.bottom);
+            .attr("height", controlHeight + slidermargin.bottom);
 
         // Create scales for the month slider
         const monthScale = d3.scaleLinear()
             .domain([1, 12])
-            .range([margin.left, controlWidth - margin.right]);
+            .range([slidermargin.left, controlWidth - slidermargin.right]);
 
         // Create scale for the hour slider
         const hourScale = d3.scaleLinear()
             .domain([0, 23])
-            .range([margin.left, controlWidth - margin.right]);
+            .range([slidermargin.left, controlWidth - slidermargin.right]);
 
         // Create the month brush
         monthBrush = d3.brushX()
-            .extent([[margin.left, margin.top], [controlWidth - margin.right, 30]])
+            .extent([[slidermargin.left, slidermargin.top], [controlWidth - slidermargin.right, 35]])
             .on("brush", brushedMonth)
             .on("end", brushendedMonth);
 
         // Create the hour brush (remove 'const')
         hourBrush = d3.brushX()
-            .extent([[margin.left, 55], [controlWidth - margin.right, 80]])
+            .extent([[slidermargin.left, 80], [controlWidth - slidermargin.right, 110]])
             .on("brush", brushedHour)
             .on("end", brushendedHour);
 
@@ -227,7 +221,7 @@ const renderMap = async function() {
             .ticks(24);
 
         controlSvg.append("g")
-            .attr("transform", `translate(0, 30)`)
+            .attr("transform", `translate(0, 35)`)
             .call(monthAxis)
             .selectAll("text")
             .style("text-anchor", "end")
@@ -236,7 +230,7 @@ const renderMap = async function() {
             .attr("transform", "rotate(-45)");
 
         controlSvg.append("g")
-            .attr("transform", `translate(0, 80)`)
+            .attr("transform", `translate(0, 110)`)
             .call(hourAxis)
             .selectAll("text")
             .style("text-anchor", "end")
@@ -246,23 +240,21 @@ const renderMap = async function() {
 
         // Labels
         controlSvg.append("text")
-            .attr("x", margin.left)
-            .attr("y", 15)
-            .text("Month Range")
+            .attr("x", slidermargin.left-90)
+            .attr("y", 20)
+            .text("Month Range:")
             .style("font-size", "12px");
 
         controlSvg.append("text")
-            .attr("x", margin.left)
-            .attr("y", 45)
-            .text("Hour Range")
+            .attr("x", slidermargin.left-87)
+            .attr("y", 100)
+            .text("Hour Range:")
             .style("font-size", "12px");
 
         // Brush event handlers
         function brushedMonth(event) {
             if (event.selection) {
                 const [x0, x1] = event.selection;
-                // month_start = Math.round(monthScale.invert(x0));
-                // month_end = Math.round(monthScale.invert(x1));
                 data_filter['month_start'] = Math.round(monthScale.invert(x0));
                 data_filter['month_end'] = Math.round(monthScale.invert(x1));
                 updateMap();
@@ -273,8 +265,6 @@ const renderMap = async function() {
         function brushedHour(event) {
             if (event.selection) {
                 const [x0, x1] = event.selection;
-                // hour_start = Math.round(hourScale.invert(x0));
-                // hour_end = Math.round(hourScale.invert(x1));
                 data_filter['hour_start'] = Math.round(monthScale.invert(x0));
                 data_filter['hour_end'] = Math.round(monthScale.invert(x1));
                 updateMap();
@@ -622,13 +612,11 @@ const renderMap = async function() {
 
         let counts = {}
 
-        console.log(data_filter)
       
         Object.entries(bikeDataBoro).forEach(([boroName, boro_counts]) => {
           nta_count = 0;
           for (let hour = data_filter["hour_start"]; hour <= data_filter['hour_end']; hour++) {
             for (let month = data_filter["month_start"]; month  <= data_filter["month_end"]; month++){
-                console.log(month)
                 data_filter['ride_type'].forEach(rider_type=>{
                 data_filter['bike_type'].forEach(bike_type=>{
                   let value = boro_counts[`${hour}_${month}_${rider_type}_${bike_type}`];
@@ -641,7 +629,6 @@ const renderMap = async function() {
           }
           counts[boroName] = nta_count
         });
-        console.log(counts)
         return counts
     };
 
