@@ -78,8 +78,85 @@ function drawFilters (){
 
 drawFilters();
 
+//drawing the time slider
+//alternative: create time slider directly
+function drawSlider(){
+  // Time variables
+  let time_start = new Date(2013, 0, 1);
+  let time_end = new Date(2023, 11, 31);
+  let min_date = new Date(2013, 0, 1);
+  let max_date = new Date(2023, 11, 31);
 
-// -------------------handling a controller being clicked-----------
+  // Time slider setup with adjusted dimensions
+  const control = d3.select("#control");
+  const controlWidth = 600;
+  const controlHeight = 40;  // Reduced from 80
+  const margin = {
+      top: 5,     // Reduced from 10
+      right: 30, 
+      bottom: 50, 
+      left: 30
+  };
+
+  const controlSvg = control.append("svg")
+      .attr("width", controlWidth)
+      .attr("height", controlHeight + margin.bottom);  // Total height is now 90px (40 + 50)
+
+  // Create scales for the time slider
+  const timeScale = d3.scaleTime()
+      .domain([min_date, max_date])
+      .range([margin.left, controlWidth - margin.right]);
+
+  // Create the brush with shorter height
+  const myBrush = d3.brushX()
+      .extent([[margin.left, margin.top], [controlWidth - margin.right, controlHeight - margin.top]])
+      .on("brush", brushed)
+      .on("end", brushended);
+
+  // Add brush to SVG
+  controlSvg.append("g")
+      .attr("class", "brush")
+      .call(myBrush);
+
+  // Add axis with year and month formatting
+  const timeAxis = d3.axisBottom(timeScale)
+      .tickFormat(d3.timeFormat("%Y %b"))
+      .ticks(d3.timeMonth.every(6));
+
+  controlSvg.append("g")
+      .attr("transform", `translate(0, ${controlHeight})`)
+      .call(timeAxis)
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", ".15em")
+      .attr("transform", "rotate(-45)");
+
+  // Brush event handlers
+  function brushed(event) {
+      if (event.selection) {
+          // Get the selected time range
+          time_start = timeScale.invert(event.selection[0]);
+          time_end = timeScale.invert(event.selection[1]);
+          
+          // Update the map with new time range
+          updateMap(time_start, time_end, filteredBorough, filteredRiderType);
+      }
+  }
+
+  function brushended(event) {
+      if (!event.selection) {
+          time_start = min_date;
+          time_end = max_date;
+          console.log("Reset time range"); // For debugging
+      }
+  }
+};
+
+drawSlider();
+
+
+// -------------------handling a controller being clicked - either a filter or the subway toggle-----------
 //filter clicked
 function filterClick(button, filterType) {
     let fil = d3.select(button);
@@ -137,79 +214,8 @@ function toggleSubwayOverlay() {
     }
 }
 
-// Create the time slider immediately after the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Time variables
-    let time_start = new Date(2013, 0, 1);
-    let time_end = new Date(2023, 11, 31);
-    let min_date = new Date(2013, 0, 1);
-    let max_date = new Date(2023, 11, 31);
 
-    // Time slider setup with adjusted dimensions
-    const control = d3.select("#control");
-    const controlWidth = 600;
-    const controlHeight = 40;  // Reduced from 80
-    const margin = {
-        top: 5,     // Reduced from 10
-        right: 30, 
-        bottom: 50, 
-        left: 30
-    };
 
-    const controlSvg = control.append("svg")
-        .attr("width", controlWidth)
-        .attr("height", controlHeight + margin.bottom);  // Total height is now 90px (40 + 50)
-
-    // Create scales for the time slider
-    const timeScale = d3.scaleTime()
-        .domain([min_date, max_date])
-        .range([margin.left, controlWidth - margin.right]);
-
-    // Create the brush with shorter height
-    const myBrush = d3.brushX()
-        .extent([[margin.left, margin.top], [controlWidth - margin.right, controlHeight - margin.top]])
-        .on("brush", brushed)
-        .on("end", brushended);
-
-    // Add brush to SVG
-    controlSvg.append("g")
-        .attr("class", "brush")
-        .call(myBrush);
-
-    // Add axis with year and month formatting
-    const timeAxis = d3.axisBottom(timeScale)
-        .tickFormat(d3.timeFormat("%Y %b"))
-        .ticks(d3.timeMonth.every(6));
-
-    controlSvg.append("g")
-        .attr("transform", `translate(0, ${controlHeight})`)
-        .call(timeAxis)
-        .selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", "rotate(-45)");
-
-    // Brush event handlers
-    function brushed(event) {
-        if (event.selection) {
-            // Get the selected time range
-            time_start = timeScale.invert(event.selection[0]);
-            time_end = timeScale.invert(event.selection[1]);
-            
-            // Update the map with new time range
-            updateMap(time_start, time_end, filteredBorough, filteredRiderType);
-        }
-    }
-
-    function brushended(event) {
-        if (!event.selection) {
-            time_start = min_date;
-            time_end = max_date;
-            console.log("Reset time range"); // For debugging
-        }
-    }
-});
 
 // Update the updateFiltered function to handle hour-level filtering
 function updateFiltered() {
