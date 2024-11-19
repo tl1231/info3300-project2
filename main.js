@@ -598,7 +598,7 @@ const renderMap = async function() {
             boro = NTA_Boro_dict[ntaname]
             if (data_filter['boros'].includes(boro)){
                 for (let hour = data_filter["hour_start"]; hour <= data_filter['hour_end']; hour++) {
-                    for (let month = data_filter["month_start"]; month  <= data_filter["month_start"]; month++){
+                    for (let month = data_filter["month_start"]; month  <= data_filter["month_end"]; month++){
                     data_filter['ride_type'].forEach(rider_type=>{
                         data_filter['bike_type'].forEach(bike_type=>{
                         let value = nta_counts[`${hour}_${month}_${rider_type}_${bike_type}`];
@@ -621,12 +621,15 @@ const renderMap = async function() {
     function parseRidershipBoro(){
 
         let counts = {}
+
+        console.log(data_filter)
       
         Object.entries(bikeDataBoro).forEach(([boroName, boro_counts]) => {
           nta_count = 0;
           for (let hour = data_filter["hour_start"]; hour <= data_filter['hour_end']; hour++) {
-            for (let month = data_filter["month_start"]; month  <= data_filter["month_start"]; month++){
-              data_filter['ride_type'].forEach(rider_type=>{
+            for (let month = data_filter["month_start"]; month  <= data_filter["month_end"]; month++){
+                console.log(month)
+                data_filter['ride_type'].forEach(rider_type=>{
                 data_filter['bike_type'].forEach(bike_type=>{
                   let value = boro_counts[`${hour}_${month}_${rider_type}_${bike_type}`];
                   if (!isNaN(value)){
@@ -638,6 +641,7 @@ const renderMap = async function() {
           }
           counts[boroName] = nta_count
         });
+        console.log(counts)
         return counts
     };
 
