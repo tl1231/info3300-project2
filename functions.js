@@ -300,53 +300,53 @@ function showSubwayLines() {
 
 
 // Create Bar Chart
-function createBarChart() {
-    const barChart = d3.select("#bar-chart");
+// function createBarChart() {
+//     const barChart = d3.select("#bar-chart");
     
-    const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
-    const barWidth = barChart.attr("width");
-    const barHeight = barChart.attr("height");
-    const barChartWidth = barWidth - barMargin.left - barMargin.right;
-    const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
+//     const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
+//     const barWidth = barChart.attr("width");
+//     const barHeight = barChart.attr("height");
+//     const barChartWidth = barWidth - barMargin.left - barMargin.right;
+//     const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
 
-    let annotations = barChart.append("g").attr("id", "annotations1");
-    let chartArea = barChart.append("g").attr("id", "points")
-            .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")");
+//     let annotations = barChart.append("g").attr("id", "annotations1");
+//     let chartArea = barChart.append("g").attr("id", "points")
+//             .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")");
 
-    // Aggregate trips by borough
-    const boroughData = boroughs.map(borough => ({
-        borough,
-        count: Object.entries(filteredData)
-            .filter(([neighborhood]) => neighborhood.includes(borough))
-            .reduce((sum, [, trips]) => sum + trips, 0)
-    }));
+//     // Aggregate trips by borough
+//     const boroughData = boroughs.map(borough => ({
+//         borough,
+//         count: Object.entries(filteredData)
+//             .filter(([neighborhood]) => neighborhood.includes(borough))
+//             .reduce((sum, [, trips]) => sum + trips, 0)
+//     }));
 
-    const xScale = d3.scaleBand()
-        .domain(boroughData.map(d => d.borough))
-        .range([margin.left, width - margin.right])
-        .padding(0.2);
+//     const xScale = d3.scaleBand()
+//         .domain(boroughData.map(d => d.borough))
+//         .range([margin.left, width - margin.right])
+//         .padding(0.2);
 
-    const yScale = d3.scaleLinear()
-        .domain([0, d3.max(boroughData, d => d.count)])
-        .range([height - margin.bottom, margin.top]);
+//     const yScale = d3.scaleLinear()
+//         .domain([0, d3.max(boroughData, d => d.count)])
+//         .range([height - margin.bottom, margin.top]);
 
-    // Axes
-    svg.append("g")
-        .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(xScale));
+//     // Axes
+//     svg.append("g")
+//         .attr("transform", `translate(0,${height - margin.bottom})`)
+//         .call(d3.axisBottom(xScale));
 
-    svg.append("g")
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(yScale));
+//     svg.append("g")
+//         .attr("transform", `translate(${margin.left},0)`)
+//         .call(d3.axisLeft(yScale));
 
-    // Bars
-    svg.selectAll(".bar")
-        .data(boroughData)
-        .join("rect")
-        .attr("class", "bar")
-        .attr("x", d => xScale(d.borough))
-        .attr("y", d => yScale(d.count))
-        .attr("width", xScale.bandwidth())
-        .attr("height", d => height - margin.bottom - yScale(d.count))
-        .attr("fill", "steelblue");
-}
+//     // Bars
+//     svg.selectAll(".bar")
+//         .data(boroughData)
+//         .join("rect")
+//         .attr("class", "bar")
+//         .attr("x", d => xScale(d.borough))
+//         .attr("y", d => yScale(d.count))
+//         .attr("width", xScale.bandwidth())
+//         .attr("height", d => height - margin.bottom - yScale(d.count))
+//         .attr("fill", "steelblue");
+// }
