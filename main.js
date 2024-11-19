@@ -195,7 +195,7 @@ const renderMap = async function() {
                    .attr("class", "y gridlines")
                    .attr(
                         "transform",
-                        `translate(${barMargin.left - 10 },${barMargin.top}`
+                        `translate(${barMargin.left - 10 },${barMargin.top})`
                    )
                    .call(leftGridlines);
         // leftGridlinesG.transition().call(leftGridlines);
