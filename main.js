@@ -6,8 +6,8 @@ const bikeTypes = ["Regular", "E-Bike"];
 
 // State variables
 let filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
-let filteredRiderType = ["Member", "Casual"];
-let filteredBikeType = ["Regular, E-Bike"];
+let filteredRiderType = ["m", "c"];  // Use data values directly
+let filteredBikeType = ["cb", "eb"]; // Use data values directly
 let showSubwayOverlay = true;
 
 let hour_start = 0;
@@ -246,10 +246,10 @@ function drawFilters (){
         boroughFilters
             .append("button")
             .attr("name", borough)
-            .attr("id", borough)
             .attr("class", "borough-filter")
-            .attr("clicked", "false")  // Change to string
+            .attr("clicked", "true")  // Start as selected
             .text(borough)
+            .style("background-color", "#ffc63d")  // Start as selected
             .on("click", function() { filterClick(this, 'borough'); });
     });
 
@@ -258,10 +258,10 @@ function drawFilters (){
             riderFilters
                 .append("button")
                 .attr("name", type)
-                .attr("id", type)
                 .attr("class", "rider-filter")
-                .attr("clicked", 'false')
+                .attr("clicked", "true")  // Start as selected
                 .text(type)
+                .style("background-color", "#ffc63d")  // Start as selected
                 .on("click", function() { filterClick(this, 'rider'); });
         });
 
@@ -270,10 +270,10 @@ function drawFilters (){
             bikeFilters
                 .append("button")
                 .attr("name", type)
-                .attr("id", type)
                 .attr("class", "bike-filter")
-                .attr("clicked", 'false')
+                .attr("clicked", "true")  // Start as selected
                 .text(type)
+                .style("background-color", "#ffc63d")  // Start as selected
                 .on("click", function() { filterClick(this, 'bike'); });
         });
 
@@ -435,37 +435,76 @@ function filterClick(button, filterType) {
     let fil = d3.select(button);
     let isClicked = fil.attr("clicked") === "true";
     
+    // Handle different filter types
     if (filterType === 'borough') {
+        const borough = fil.attr("name");
         if (isClicked) {
-            filteredBorough = filteredBorough.filter(b => b !== fil.attr("name"));
-            fil.style("background-color", "white");
+            // Remove borough if it's already selected
+            filteredBorough = filteredBorough.filter(b => b !== borough);
+            if (filteredBorough.length === 0) {
+                // If no boroughs selected, select all
+                filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
+                d3.selectAll(".borough-filter")
+                    .style("background-color", "#ffc63d")
+                    .attr("clicked", "true");
+                return;
+            }
         } else {
-            filteredBorough.push(fil.attr("name"));
-            fil.style("background-color", "#ffc63d");
+            // Add borough if it's not selected
+            filteredBorough.push(borough);
         }
-    } else if (filterType === 'rider') {
+    } 
+    else if (filterType === 'rider') {
+        const riderType = fil.attr("name") === "Member" ? "m" : "c";
         if (isClicked) {
-            filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-            fil.style("background-color", "white");
+            filteredRiderType = filteredRiderType.filter(t => t !== riderType);
+            if (filteredRiderType.length === 0) {
+                filteredRiderType = ["m", "c"];
+                d3.selectAll(".rider-filter")
+                    .style("background-color", "#ffc63d")
+                    .attr("clicked", "true");
+                return;
+            }
         } else {
-            filteredRiderType.push(fil.attr("name"));
-            fil.style("background-color", "#ffc63d");
+            filteredRiderType.push(riderType);
         }
-    } else if (filterType === 'bike') {
+    }
+    else if (filterType === 'bike') {
+        const bikeType = fil.attr("name") === "Regular" ? "cb" : "eb";
         if (isClicked) {
-            filteredBikeType = filteredBikeType.filter(t => t !== fil.attr("name"));
-            fil.style("background-color", "white");
+            filteredBikeType = filteredBikeType.filter(t => t !== bikeType);
+            if (filteredBikeType.length === 0) {
+                filteredBikeType = ["cb", "eb"];
+                d3.selectAll(".bike-filter")
+                    .style("background-color", "#ffc63d")
+                    .attr("clicked", "true");
+                return;
+            }
         } else {
-            filteredBikeType.push(fil.attr("name"));
-            fil.style("background-color", "#ffc63d");
+            filteredBikeType.push(bikeType);
         }
     }
 
-    // Toggle button state
-    fil.attr("clicked", !isClicked ? "true" : "false");
-    
+    // Update button appearance
+    fil.style("background-color", isClicked ? "white" : "#ffc63d")
+       .attr("clicked", isClicked ? "false" : "true");
+
+    console.log("Current filters:", {
+        boroughs: filteredBorough,
+        riders: filteredRiderType,
+        bikes: filteredBikeType
+    });
+
     // Update visualizations
-    updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
+    updateMap(
+        hour_start, 
+        hour_end, 
+        month_start, 
+        month_end, 
+        filteredBorough,
+        filteredRiderType
+    );
+    
     drawBar(hour_start, hour_end, month_start, month_end);
 }
 // Subway overlay toggle handler
@@ -495,37 +534,32 @@ function updateFiltered() {
 
 // Clear all filters
 function clear() {
-    // Reset time variables
+    // Reset all filters to initial state
+    filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
+    filteredRiderType = ["m", "c"];
+    filteredBikeType = ["cb", "eb"];
+    
+    // Reset all buttons
+    d3.selectAll(".borough-filter, .rider-filter, .bike-filter")
+        .style("background-color", "white")
+        .attr("clicked", "false");
+    
+    // Reset time range
     hour_start = 0;
     hour_end = 23;
     month_start = 1;
     month_end = 12;
     
-    // Reset subway visibility
-    showSubwayLines();
-    
-    // Reset filters
-    filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
-    filteredRiderType = ["Member", "Casual"];
-    
-    // Reset button styles
-    d3.selectAll(".borough-filter, .rider-filter")
-        .style("background-color", "white")
-        .attr("clicked", "false");
-    
     // Reset subway toggle
+    showSubwayOverlay = false;
     d3.select("#subway-toggle")
-        .attr("clicked", "false")
         .style("background-color", "white")
         .text("Show Subway Routes");
+    hideSubwayLines();
     
-    // Update the map
+    // Update visualizations
     updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
     drawBar(hour_start, hour_end, month_start, month_end);
-    
-    // Reset both brushes
-    d3.select(".month-brush").call(monthBrush.move, null);
-    d3.select(".hour-brush").call(hourBrush.move, null);
 }
 
 // Functions to show/hide subway lines
