@@ -1,6 +1,3 @@
-//Error: <g> attribute transform: Unexpected end of attribute. Expected ')', "translate(60,10".
-
-
 //----------Part 1: drawing the inital view on the page
 // setting up filter options and selections
 const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
@@ -18,16 +15,131 @@ let hour_end = 23;
 let month_start = 1;
 let month_end = 12;
 
+let bikeDataBoro;  // Declare global variable
+let neighborhoodFeatures;
+let subwayFeature;
+let citiBikeData;
+
 const mapSvg = d3.select("#citibike_map");
 const width = mapSvg.attr("width");
 const height = mapSvg.attr("height");
 const margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
+// CREATE BAR CHART
+const barChart = d3.select("svg#bar-chart");
+const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
+const barWidth = barChart.attr("width");
+const barHeight = barChart.attr("height");
+const barChartWidth = barWidth - barMargin.left - barMargin.right;
+const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
+
+let annotations = barChart.append("g").attr("id", "annotations1");
+let chartArea = barChart.append("g")
+                        .attr("id", "points")
+                        .attr(
+                            "transform",
+                            `translate(${barMargin.left},${barMargin.top})`
+                        );
+
+// Axes placeholders
+annotations.append("g")
+            .attr("class", "x axis")
+            .attr(
+                "transform", 
+                `translate(${barMargin.left}, ${barChartHeight + barMargin.top + 10})`
+            )
+            // .call(bottomAxis);
+
+let leftAxis = d3.axisLeft();
+let leftGridlines = d3.axisLeft()
+    .tickSize(-barChartWidth - 10)
+    .tickFormat("");
+let leftAxisG = annotations.append("g")
+    .attr("class", "y axis")
+    .attr(
+        "transform",
+        `translate(${barMargin.left - 10},${barMargin.top})`
+    );
+
+// Rotate x-axis text for readability
+barChart.selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.6em")
+        .attr("dy", ".16em")
+        .attr("transform", "rotate(-25)");
+
+function drawBar(hour_start = 0, hour_end = 23, month_start = 1, month_end = 12) {
+    // Get ridership by borough with time parameters
+    let ridershipByBoro = parseRidershipBoro(
+        bikeDataBoro,
+        hour_start,
+        hour_end,
+        month_start,
+        month_end,
+        filteredRiderType === "Member" ? "m" : filteredRiderType === "Casual" ? "c" : "all"
+    );
+
+    const boroughRideCounts = Object.entries(ridershipByBoro).map(([borough, count]) => ({
+        borough: borough,
+        count: count
+    }));
+
+    // --Scaling--
+    // x-axis scale
+    var boroScale = d3.scaleBand()
+        .domain(boroughRideCounts.map(d => d.borough)) 
+        .range([0, barChartWidth])
+        .padding([0.2]);
+
+    // y-axis scale for ride counts
+    const countExtent = d3.extent(boroughRideCounts, d => d.count);
+    var countScale = d3.scaleLinear()
+        .domain([0, countExtent[1]])
+        .range([barChartHeight, 0]); 
+
+    // color scale for boroughs
+    const barColorScale = d3.scaleOrdinal()
+            .domain(boroughRideCounts.map(d => d.borough))
+            .range(["#FF5733", "#33FF57", "#3357FF", "#FF33A1"])
+
+    // --Render axes--
+    // Bottom axis
+    let bottomAxis = d3.axisBottom(boroScale);
+    annotations.select(".x.axis").call(bottomAxis);
+
+    // Left axis
+    leftAxis.scale(countScale);
+    leftAxisG.transition().call(leftAxis);
+
+    // Gridlines
+    leftGridlines.scale(countScale);
+    annotations.selectAll(".y.gridlines")
+               .data([0])
+               .join("g")
+               .attr("class", "y gridlines")
+               .attr(
+                    "transform",
+                    `translate(${barMargin.left - 10 },${barMargin.top})`
+               )
+               .call(leftGridlines);
+    // leftGridlinesG.transition().call(leftGridlines);
+
+    // Drawing the bars
+    chartArea.selectAll("rect.bar")
+             .data(boroughRideCounts)
+             .join("rect")
+             .attr("class", "bar")
+             .attr("x", d => boroScale(d.borough))
+             .attr("y", d => countScale(d.count))
+             .attr("height", d => barChartHeight - countScale(d.count))
+             .attr("width", boroScale.bandwidth())  
+             .attr("fill", d => barColorScale(d.borough))  
+}
 // Main function that contains the data within it
 const renderMap = async function() {
 
     // Load all datasets
-    const [neighborhoods, bikeDataNTA, subways, bikeDataBoro] = await Promise.all([
+    const [neighborhoods, bikeDataNTA, subways, bikeDataBoroData] = await Promise.all([
         d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson"), 
         d3.json("data/counts_by_ntaname.json"),
         d3.json("data/Subway_Lines.geojson"),
@@ -35,9 +147,11 @@ const renderMap = async function() {
     ]);
 
     // Store data globally
+    bikeDataBoro = bikeDataBoroData;  // Assign to global variable
     neighborhoodFeatures = neighborhoods;
     subwayFeature = subways;
     citiBikeData = bikeDataNTA;
+
 
     // Initial setup:
     let ridesByNeighborhood = parseRidershipNH(bikeDataNTA);
@@ -104,110 +218,7 @@ const renderMap = async function() {
     // Initial legend update
     updateLegend(colorScale);
 
-    // CREATE BAR CHART
-    const barChart = d3.select("svg#bar-chart");
-    const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
-    const barWidth = barChart.attr("width");
-    const barHeight = barChart.attr("height");
-    const barChartWidth = barWidth - barMargin.left - barMargin.right;
-    const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
-
-    let annotations = barChart.append("g").attr("id", "annotations1");
-    let chartArea = barChart.append("g")
-                            .attr("id", "points")
-                            .attr(
-                                "transform",
-                                `translate(${barMargin.left},${barMargin.top})`
-                            );
-
-    // Axes placeholders
-    annotations.append("g")
-                .attr("class", "x axis")
-                .attr(
-                    "transform", 
-                    `translate(${barMargin.left}, ${barChartHeight + barMargin.top + 10})`
-                )
-                // .call(bottomAxis);
-
-    let leftAxis = d3.axisLeft();
-    let leftGridlines = d3.axisLeft()
-        .tickSize(-barChartWidth - 10)
-        .tickFormat("");
-    let leftAxisG = annotations.append("g")
-        .attr("class", "y axis")
-        .attr(
-            "transform",
-            `translate(${barMargin.left - 10},${barMargin.top})`
-        );
-
-    // Rotate x-axis text for readability
-    barChart.selectAll("text")
-            .style("text-anchor", "end")
-            .attr("dx", "-.6em")
-            .attr("dy", ".16em")
-            .attr("transform", "rotate(-25)");
-
-    function drawBar() {
-        // Get ridership by borough
-        let ridershipByBoro = parseRidershipBoro(bikeDataBoro);
-
-        const boroughRideCounts = Object.entries(ridershipByBoro).map(([borough, count]) => ({
-            borough: borough,
-            count: count
-        }));
-
-        // --Scaling--
-        // x-axis scale
-        var boroScale = d3.scaleBand()
-            .domain(boroughRideCounts.map(d => d.borough)) 
-            .range([0, barChartWidth])
-            .padding([0.2]);
-
-        // y-axis scale for ride counts
-        const countExtent = d3.extent(boroughRideCounts, d => d.count);
-        var countScale = d3.scaleLinear()
-            .domain([0, countExtent[1]])
-            .range([barChartHeight, 0]); 
-
-        // color scale for boroughs
-        const barColorScale = d3.scaleOrdinal()
-                .domain(boroughRideCounts.map(d => d.borough))
-                .range(["#FF5733", "#33FF57", "#3357FF", "#FF33A1"])
-
-        // --Render axes--
-        // Bottom axis
-        let bottomAxis = d3.axisBottom(boroScale);
-        annotations.select(".x.axis").call(bottomAxis);
-
-        // Left axis
-        leftAxis.scale(countScale);
-        leftAxisG.transition().call(leftAxis);
-
-        // Gridlines
-        leftGridlines.scale(countScale);
-        annotations.selectAll(".y.gridlines")
-                   .data([0])
-                   .join("g")
-                   .attr("class", "y gridlines")
-                   .attr(
-                        "transform",
-                        `translate(${barMargin.left - 10 },${barMargin.top})`
-                   )
-                   .call(leftGridlines);
-        // leftGridlinesG.transition().call(leftGridlines);
-
-        // Drawing the bars
-        chartArea.selectAll("rect.bar")
-                 .data(boroughRideCounts)
-                 .join("rect")
-                 .attr("class", "bar")
-                 .attr("x", d => boroScale(d.borough))
-                 .attr("y", d => countScale(d.count))
-                 .attr("height", d => barChartHeight - countScale(d.count))
-                 .attr("width", boroScale.bandwidth())  
-                 .attr("fill", d => barColorScale(d.borough))  
-    }
-
+    
     drawBar();
 };
 
@@ -381,6 +392,7 @@ function drawSliders(){
             month_start = Math.round(monthScale.invert(x0));
             month_end = Math.round(monthScale.invert(x1));
             updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
+            drawBar(hour_start, hour_end, month_start, month_end);  // Add this line
         }
     }
     
@@ -390,6 +402,7 @@ function drawSliders(){
             hour_start = Math.round(hourScale.invert(x0));
             hour_end = Math.round(hourScale.invert(x1));
             updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
+            drawBar(hour_start, hour_end, month_start, month_end);  // Add this line
         }
     }
 
@@ -451,6 +464,7 @@ function filterClick(button, filterType) {
     
     // Update the map with current filters and time range
     updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
+    drawBar(hour_start, hour_end, month_start, month_end);
 }
 // Subway overlay toggle handler
 function toggleSubwayOverlay() {
@@ -505,6 +519,7 @@ function clear() {
     
     // Update the map
     updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
+    drawBar(hour_start, hour_end, month_start, month_end);
     
     // Reset both brushes
     d3.select(".month-brush").call(monthBrush.move, null);
