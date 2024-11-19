@@ -172,11 +172,11 @@ const renderMap = async function() {
         // Time slider setup with adjusted dimensions
         const control = d3.select("#control");
         const controlWidth = 600;
-        const controlHeight = 100;  // Increased to accommodate two sliders
+        const controlHeight = 220;  
         const margin = {
             top: 5,
             right: 30,
-            bottom: 50,
+            bottom: 20,
             left: 30
         };
 
@@ -194,15 +194,18 @@ const renderMap = async function() {
             .domain([0, 23])
             .range([margin.left, controlWidth - margin.right]);
 
+        /// Brush height set
+        const brushHeight = 40;
+
         // Create the month brush
         monthBrush = d3.brushX()
-            .extent([[margin.left, margin.top], [controlWidth - margin.right, 30]])
+            .extent([[margin.left, margin.top + 30], [controlWidth - margin.right, margin.top + 30 + brushHeight]])
             .on("brush", brushedMonth)
             .on("end", brushendedMonth);
 
-        // Create the hour brush (remove 'const')
+        // Create the hour brush
         hourBrush = d3.brushX()
-            .extent([[margin.left, 55], [controlWidth - margin.right, 80]])
+            .extent([[margin.left, margin.top + brushHeight + 130], [controlWidth - margin.right, margin.top + brushHeight + 130 + brushHeight]])
             .on("brush", brushedHour)
             .on("end", brushendedHour);
 
@@ -227,7 +230,8 @@ const renderMap = async function() {
             .ticks(24);
 
         controlSvg.append("g")
-            .attr("transform", `translate(0, 30)`)
+            // .attr("transform", `translate(0, 40)`)
+            .attr("transform", `translate(0, ${margin.top + 30 + brushHeight + 10})`)
             .call(monthAxis)
             .selectAll("text")
             .style("text-anchor", "end")
@@ -236,7 +240,8 @@ const renderMap = async function() {
             .attr("transform", "rotate(-45)");
 
         controlSvg.append("g")
-            .attr("transform", `translate(0, 80)`)
+            // .attr("transform", `translate(0, 130)`)
+            .attr("transform", `translate(0, ${margin.top + brushHeight + 130 + brushHeight + 10})`)
             .call(hourAxis)
             .selectAll("text")
             .style("text-anchor", "end")
@@ -247,13 +252,13 @@ const renderMap = async function() {
         // Labels
         controlSvg.append("text")
             .attr("x", margin.left)
-            .attr("y", 15)
+            .attr("y", margin.top + 20)
             .text("Month Range")
             .style("font-size", "12px");
 
         controlSvg.append("text")
             .attr("x", margin.left)
-            .attr("y", 45)
+            .attr("y", margin.top + brushHeight + 120)
             .text("Hour Range")
             .style("font-size", "12px");
 
