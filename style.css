@@ -61,11 +61,16 @@ main {
   cursor: pointer;
 }
 
-.borough-filter:hover,
+#bike-filters {
+  display: flex;
+  flex-direction: column;
+}
+
+/* .borough-filter:hover,
 .rider-filter:hover,
 #subway-toggle:hover {
   background-color: #a6ceff !important;
-}
+} */
 
 #sidebar h4 {   
   margin-top: 20px;
@@ -90,7 +95,8 @@ main {
   color: red;
   border-style: solid;
   border-color: red;
-  padding: 5px;
+  border-radius: 4px;
+  padding: 6px;
   width: 100%;
 }
 
