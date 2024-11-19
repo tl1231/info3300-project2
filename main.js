@@ -433,80 +433,164 @@ drawSliders();
 //filter clicked
 function filterClick(button, filterType) {
     let fil = d3.select(button);
+    let buttonName = fil.attr("name");
     let isClicked = fil.attr("clicked") === "true";
     
-    // Handle different filter types
-    if (filterType === 'borough') {
-        const borough = fil.attr("name");
-        if (isClicked) {
-            // Remove borough if it's already selected
-            filteredBorough = filteredBorough.filter(b => b !== borough);
-            if (filteredBorough.length === 0) {
-                // If no boroughs selected, select all
-                filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
-                d3.selectAll(".borough-filter")
-                    .style("background-color", "#ffc63d")
-                    .attr("clicked", "true");
-                return;
+    console.log("Filter clicked:", {type: filterType, name: buttonName, wasClicked: isClicked});
+
+    // Handle the filter updates
+    switch(filterType) {
+        case 'borough':
+            if (isClicked) {
+                filteredBorough = filteredBorough.filter(b => b !== buttonName);
+                if (filteredBorough.length === 0) {
+                    filteredBorough = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
+                    d3.selectAll(".borough-filter")
+                        .style("background-color", "#ffc63d")
+                        .attr("clicked", "true");
+                    return;
+                }
+            } else {
+                filteredBorough.push(buttonName);
             }
-        } else {
-            // Add borough if it's not selected
-            filteredBorough.push(borough);
-        }
-    } 
-    else if (filterType === 'rider') {
-        const riderType = fil.attr("name") === "Member" ? "m" : "c";
-        if (isClicked) {
-            filteredRiderType = filteredRiderType.filter(t => t !== riderType);
-            if (filteredRiderType.length === 0) {
-                filteredRiderType = ["m", "c"];
-                d3.selectAll(".rider-filter")
-                    .style("background-color", "#ffc63d")
-                    .attr("clicked", "true");
-                return;
+            break;
+            
+        case 'rider':
+            const riderValue = buttonName === "Member" ? "m" : "c";
+            if (isClicked) {
+                filteredRiderType = filteredRiderType.filter(t => t !== riderValue);
+                if (filteredRiderType.length === 0) {
+                    filteredRiderType = ["m", "c"];
+                    d3.selectAll(".rider-filter")
+                        .style("background-color", "#ffc63d")
+                        .attr("clicked", "true");
+                    return;
+                }
+            } else {
+                filteredRiderType.push(riderValue);
             }
-        } else {
-            filteredRiderType.push(riderType);
-        }
-    }
-    else if (filterType === 'bike') {
-        const bikeType = fil.attr("name") === "Regular" ? "cb" : "eb";
-        if (isClicked) {
-            filteredBikeType = filteredBikeType.filter(t => t !== bikeType);
-            if (filteredBikeType.length === 0) {
-                filteredBikeType = ["cb", "eb"];
-                d3.selectAll(".bike-filter")
-                    .style("background-color", "#ffc63d")
-                    .attr("clicked", "true");
-                return;
+            break;
+            
+        case 'bike':
+            const bikeValue = buttonName === "Regular" ? "cb" : "eb";
+            if (isClicked) {
+                filteredBikeType = filteredBikeType.filter(t => t !== bikeValue);
+                if (filteredBikeType.length === 0) {
+                    filteredBikeType = ["cb", "eb"];
+                    d3.selectAll(".bike-filter")
+                        .style("background-color", "#ffc63d")
+                        .attr("clicked", "true");
+                    return;
+                }
+            } else {
+                filteredBikeType.push(bikeValue);
             }
-        } else {
-            filteredBikeType.push(bikeType);
-        }
+            break;
     }
 
-    // Update button appearance
+    // Toggle button appearance
     fil.style("background-color", isClicked ? "white" : "#ffc63d")
-       .attr("clicked", isClicked ? "false" : "true");
+       .attr("clicked", (!isClicked).toString());
 
-    console.log("Current filters:", {
-        boroughs: filteredBorough,
-        riders: filteredRiderType,
-        bikes: filteredBikeType
-    });
-
-    // Update visualizations
-    updateMap(
-        hour_start, 
-        hour_end, 
-        month_start, 
-        month_end, 
-        filteredBorough,
-        filteredRiderType
-    );
-    
-    drawBar(hour_start, hour_end, month_start, month_end);
+    // Update both visualizations with current state
+    updateVisualizations();
 }
+
+// Add this new function to handle both visualization updates
+function updateVisualizations() {
+    // Get filtered data for neighborhoods
+    let filteredRidesByNeighborhood = parseRidershipNH(
+        citiBikeData,
+        hour_start,
+        hour_end,
+        month_start,
+        month_end,
+        filteredRiderType.length === 0 ? "all" : filteredRiderType,
+        filteredBikeType.length === 0 ? "all" : filteredBikeType
+    );
+
+    // Get filtered data for boroughs
+    let filteredRidesByBorough = parseRidershipBoro(
+        bikeDataBoro,
+        hour_start,
+        hour_end,
+        month_start,
+        month_end,
+        filteredRiderType.length === 0 ? "all" : filteredRiderType,
+        filteredBikeType.length === 0 ? "all" : filteredBikeType
+    );
+
+    // Update map
+    updateMap(filteredRidesByNeighborhood);
+
+    // Update bar chart
+    updateBarChart(filteredRidesByBorough);
+}
+
+// Update the updateMap function
+function updateMap(filteredRides) {
+    if (!neighborhoodFeatures) return;
+
+    const maxRides = Math.max(1, d3.max(Object.values(filteredRides)));
+    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+        .domain([0, maxRides]);
+
+    mapSvg.select(".neighborhood-layer")
+        .selectAll("path.neighborhood")
+        .transition()
+        .duration(200)
+        .attr("fill", d => {
+            const rides = filteredRides[d.properties.ntaname] || 0;
+            return colorScale(rides);
+        });
+
+    updateLegend(colorScale);
+}
+
+// Update the bar chart update function
+function updateBarChart(filteredRides) {
+    // Convert borough data to array format
+    const boroughData = Object.entries(filteredRides)
+        .filter(([boro]) => filteredBorough.includes(boro))
+        .map(([boro, count]) => ({
+            borough: boro,
+            count: count || 0
+        }));
+
+    // Update scales
+    const xScale = d3.scaleBand()
+        .domain(boroughData.map(d => d.borough))
+        .range([0, barChartWidth])
+        .padding(0.1);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(boroughData, d => d.count) || 1000])
+        .range([barChartHeight, 0]);
+
+    // Update bars
+    chartArea.selectAll(".bar")
+        .data(boroughData)
+        .join("rect")
+        .attr("class", "bar")
+        .transition()
+        .duration(200)
+        .attr("x", d => xScale(d.borough))
+        .attr("y", d => yScale(d.count))
+        .attr("width", xScale.bandwidth())
+        .attr("height", d => barChartHeight - yScale(d.count))
+        .attr("fill", "steelblue");
+
+    // Update axes
+    annotations.select(".x.axis")
+        .transition()
+        .duration(200)
+        .call(d3.axisBottom(xScale));
+
+    leftAxisG.transition()
+        .duration(200)
+        .call(d3.axisLeft(yScale));
+}
+
 // Subway overlay toggle handler
 function toggleSubwayOverlay() {
     let button = d3.select("#subway-toggle");
@@ -693,7 +777,3 @@ function timeSliderCallback(timeStart, timeEnd) {
     updateMap(hour_start, hour_end, month_start, month_end, filteredBorough, filteredRiderType);
     // ... your existing time slider code ...
 }
-
-
-
-
