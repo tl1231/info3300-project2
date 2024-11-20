@@ -131,7 +131,7 @@ let renderMap = async function() {
             return colorScale(rides);
         })
         .attr("stroke", "#D3D3D3")
-        .attr("stroke-width", "0.5px")
+        .attr("stroke-width", "0.3px")
         .on("click", function(event, d) {
             updateNTAProfile(d.properties.ntaname);
         
@@ -882,7 +882,7 @@ let renderMap = async function() {
             // Update visualizations with reset state
         d3.select("#NTAProfileName").text("New York City")
 
-        d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
+        d3.selectAll(".neighborhood").style("stroke-width", "0.3px");
 
         updateMap();
         updateBarChart();
@@ -899,7 +899,7 @@ let renderMap = async function() {
                     .text("Show Subway Routes");
         } else {
             data_filter['showSubwayOverlay'] = true;
-            button.attr("clicked", "true")
+            button.attr("clicked", "true")//
                     .style("background-color", "#E29344")
                     .text("Hide Subway Routes");
         }
@@ -968,7 +968,7 @@ function updateLegend(colorScale) {
         .range([0, legendWidth]);
     
     const legendAxis = d3.axisBottom(legendScale)
-        .ticks(4)
+        .ticks(3)
         .tickFormat(d3.format(",.0f"));
     
     let defs = mapSvg.selectAll("defs").data([0]).join("defs");
