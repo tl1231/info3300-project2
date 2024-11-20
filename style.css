@@ -12,6 +12,7 @@ main {
 
 #header {
   padding: 10px;
+  text-align: center;
 }
 
 #sidebar {
@@ -27,6 +28,7 @@ main {
   min-width: 130px;
   height: 100%;
   margin-top: 0;
+  max-width: 135px;
 }
 
 #main_content {
@@ -132,7 +134,7 @@ main {
 }
 
 .detailscolor {
-  width: fit-content;
+  width: 600px;
   margin: 0;
   /* flex: 1; */
 }
@@ -142,3 +144,13 @@ main {
   /* flex: 1; */
   margin: 0;
 }
+
+.barchartContainer{
+  margin-top: 20px;
+}
+
+#bar_chart_name{
+  margin-bottom: 5px;
+}
+
+

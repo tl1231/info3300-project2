@@ -13,32 +13,31 @@
             <div id="clearArea"></div>
             
             <!-- Borough Filter Section -->
-            <h4><strong>Filter</strong> Rides by Borough</h4>
+            <h4><strong>Filter</strong> by Borough</h4>
             <div id="borough-filters"></div>
             
             <!-- Rider Type Filter Section -->
-            <h4><strong>Filter</strong> by Rider Type</h4>
+            <h4><strong>Filter</strong> by Rider Type:</h4>
             <div id="rider-filters"></div>
 
             <!-- Bike Type Filter Section -->
-            <h4><strong>Filter</strong> by Bike Type</h4>
+            <h4><strong>Filter</strong> by Bike Type:</h4>
             <div id="bike-filters"></div>
             
             <!-- Subway Overlay Toggle -->
-            <h4><strong>Overlay</strong> Subway Routes</h4>
+            <h4><strong>Overlay</strong> Subway Routes:</h4>
             <div id="overlay-controls"></div>
         </div>
 
         <div id="main_content">
             <div class="mainContentHeaderContainer">
                 <div class="detailscolor">
-                    <h4><strong>Filter by Month of Year and Hour of Day</strong></h4>
+                    <h4><strong>Filter by Month of Year and Hour of Day:</strong></h4>
                     <!-- <p>Narrow the dataset according to time ranges with the slider</p> -->
                     <div id="control"></div>
                 </div>
-
                 <div class="BackgroundInfo">
-                    <h4><strong>Background Informaiton</strong></h4>
+                    <h4><strong>Background Information</strong></h4>
                     <p>For our project, we will look at CitiBike usage in New York City neighborhoods and compare the concentration of rides starting at each neighborhood. 
                         We want to see if CitiBikes are an effective alternative means of transportation by visualizing it against the NYC Subway System and the 
                         percentage of people who own a car in each neighborhood tabulation area.
@@ -51,10 +50,14 @@
                 <div style="margin:0 auto">
                     <svg id="citibike_map" height="700" width="600" style="background: rgb(237, 237, 237); margin-top:20px; border-radius:10px"></svg>
                 </div>
-
-                <div class="contextArea" style="margin:0 auto">
-                    <h4><strong>Barchart</strong></h4>
-                    <svg id="bar-chart" height="650" width="700"></svg>
+            <div class="contextArea" style="margin:0 auto">
+                <div class="barchartContainer">
+                    <h4 id="bar_chart_name"><strong>Ridership by Borough</strong></h4>
+                    <svg id="bar-chart" height="400" width="450"></svg>
+                </div>
+                <div class="neighborhoodContainer">
+                    <h4 id = "pie_chart_name"><strong>Neighborhood Profile: </strong><span id="NTAProfileName">New York City</span></h4>
+                    <svg id="neighborhood_viz" height="350" width="450"></svg>
                 </div>
             </div>
     

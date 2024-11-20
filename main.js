@@ -8,7 +8,7 @@ const bikeTypes = ["Regular", "E-Bike"];
 let monthBrush;
 let hourBrush;
 
-let bikeDataBoro;  // Declare global variable
+let bikeDataBoro;  
 let neighborhoodFeatures;
 let subwayFeature;
 let citiBikeData;
@@ -17,6 +17,7 @@ const mapSvg = d3.select("#citibike_map");
 const width = mapSvg.attr("width");
 const height = mapSvg.attr("height");
 const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+
 
 var data_filter = {
     "hour_start": 0,
@@ -31,7 +32,7 @@ var data_filter = {
 
 // CREATE BAR CHART
 const barChart = d3.select("svg#bar-chart");
-const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
+const barMargin = { top: 0, right: 30, bottom: 45, left: 70 }; // adjust
 const barWidth = barChart.attr("width");
 const barHeight = barChart.attr("height");
 const barChartWidth = barWidth - barMargin.left - barMargin.right;
@@ -77,11 +78,12 @@ barChart.selectAll("text")
 const renderMap = async function() {
 
     // Load all datasets
-    const [neighborhoods, bikeDataNTA, subways, bikeDataBoro] = await Promise.all([
+    const [neighborhoods, bikeDataNTA, subways, bikeDataBoro,ACS_NTA] = await Promise.all([
         d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson"), 
         d3.json("data/counts_by_ntaname.json"),
         d3.json("data/Subway_Lines.geojson"),
-        d3.json("data/counts_by_boro.json")
+        d3.json("data/counts_by_boro.json"),
+        d3.json("data/ACS_NTA.json")
     ]);
 
     // Store data globally  // Assign to global variable
@@ -100,6 +102,7 @@ const renderMap = async function() {
     let ridesByNeighborhood = parseRidershipNH(bikeDataNTA);
     const colorScale = d3.scaleSequential(d3.interpolateBlues)
                           .domain([0, d3.max(Object.values(ridesByNeighborhood))]);
+    console.log(Object.values(ridesByNeighborhood));
     currentColorScale = colorScale;
 
     // Map Setup
@@ -129,6 +132,12 @@ const renderMap = async function() {
         })
         .attr("stroke", "white")
         .attr("stroke-width", "0.5px")
+        .on("click", function(event, d) {
+            updatehorizontalBar(d.properties.ntaname);
+        
+            d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
+            d3.select(this).style("stroke-width", "2px");
+        })
         .append("title")
         .text(d => {
             const rides = ridesByNeighborhood[d.properties.ntaname] || 0;
@@ -143,6 +152,46 @@ const renderMap = async function() {
         .attr("fill", 'none')
         .attr("stroke", "black")
         .attr("stroke-width", "0.3px");
+
+    
+    //-- adding zoom functionality
+    const mapWidth = width - margin.left - margin.right;
+    const mapHeight = height - margin.top - margin.bottom;
+    
+    
+    const viewport = mapSvg.append("g")
+        .attr("class", "viewport")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+    
+    
+    neighborhoodLayer.remove();
+    subwayLayer.remove();
+    viewport.append(() => neighborhoodLayer.node());
+    viewport.append(() => subwayLayer.node());
+    
+    
+    let zoom = d3.zoom()
+        .scaleExtent([1, 20])  
+        .translateExtent([
+            [-50, -50], 
+            [mapWidth + 50, mapHeight + 50]
+        ]) 
+        .on("zoom", mapZoomed);
+    
+    mapSvg.call(zoom);
+    
+    mapSvg.call(zoom.transform, d3.zoomIdentity);
+    
+    function mapZoomed({transform}) {
+        viewport.attr("transform", transform.toString());
+        
+        viewport.selectAll(".neighborhood")
+            .style("stroke-width", 0.5 / transform.k);
+        
+        viewport.selectAll(".subway")
+            .style("stroke-width", 0.3 / transform.k);
+    }
+
     // Add legend
     const legendWidth = 200;
     const legendHeight = 10;
@@ -166,19 +215,19 @@ const renderMap = async function() {
         // Time slider setup with adjusted dimensions
         const control = d3.select("#control");
         const controlWidth = 600;
-        const controlHeight = 100;  // Increased to accommodate two sliders
+        const controlHeight = 90;  // Increased to accommodate two sliders
         const slidermargin = {
             top: 5,
             right: 30,
             bottom: 50,
-            left: 120
+            left: 90
         };
 
         const controlSvg = control.append("svg")
             .attr("width", controlWidth)
             .attr("height", controlHeight + slidermargin.bottom);
 
-        // Create scales for the month slider
+        // Create scale for the month slider
         const monthScale = d3.scaleLinear()
             .domain([1, 12])
             .range([slidermargin.left, controlWidth - slidermargin.right]);
@@ -194,7 +243,7 @@ const renderMap = async function() {
             .on("brush", brushedMonth)
             .on("end", brushendedMonth);
 
-        // Create the hour brush (remove 'const')
+        // Create the hour brush 
         hourBrush = d3.brushX()
             .extent([[slidermargin.left, 80], [controlWidth - slidermargin.right, 110]])
             .on("brush", brushedHour)
@@ -305,7 +354,7 @@ const renderMap = async function() {
         let clearButton = clearArea
                     .append("button")
                     .attr("id", "clear")
-                    .text("Reset Visualizations")
+                    .text("Reset Filters")
                     .on("click", clear);
 
         // Create borough filter checkboxes
@@ -325,16 +374,7 @@ const renderMap = async function() {
                 
             label.append("span").text(borough);
         });
-        // OLD CODE FOR BOROUGH BUTTON FILTER
-            // boroughFilters
-            //     .append("button")
-            //     .attr("name", borough)
-            //     .attr("class", "borough-filter")
-            //     .attr("clicked", "true")  // Start as selected
-            //     .text(borough)
-            //     .style("background-color", "#1c299b")  // Start as selected
-            //     .style("color", "white")
-            //     .on("click", function() { filterClick(this, 'borough'); });
+
 
         // Create rider type filter checkboxes
         riderTypes.forEach((type) => {
@@ -346,24 +386,14 @@ const renderMap = async function() {
                 .attr("type", "checkbox")
                 .attr("name", type)
                 .attr("class", "rider-filter")
-                .attr("checked", true) // Start as selected
+                .attr("checked", true) 
                 .on("change", function () {
                     filterClick(this, 'rider');
                 });
                 
             label.append("span").text(type);
         });
-        // OLD CODE FOR RIDER BUTTON FILTER
-            // riderTypes.forEach((type) => {
-            //     riderFilters
-            //         .append("button")
-            //         .attr("name", type)
-            //         .attr("class", "rider-filter")
-            //         .attr("clicked", "true")  // Start as selected
-            //         .text(type)
-            //         .style("background-color", "#ffc63d")  // Start as selected
-            //         .on("click", function() { filterClick(this, 'rider'); });
-            // });
+ 
 
         // Create bike type filter checkboxes
         bikeTypes.forEach((type) => {
@@ -375,38 +405,14 @@ const renderMap = async function() {
                 .attr("type", "checkbox")
                 .attr("name", type)
                 .attr("class", "bike-filter")
-                .attr("checked", true) // Start as selected
+                .attr("checked", true) 
                 .on("change", function () {
                     filterClick(this, 'bike');
                 });
                 
             label.append("span").text(type);
         });
-        // OLD CODE FOR BIKE TYPE BUTTON FILTER
-            // bikeTypes.forEach((type) => {
-            //     bikeFilters
-            //         .append("button")
-            //         .attr("name", type)
-            //         .attr("class", "bike-filter")
-            //         .attr("clicked", "true")  // Start as selected
-            //         .text(type)
-            //         .style("background-color", "#ffc63d")  // Start as selected
-            //         .on("click", function() { filterClick(this, 'bike'); });
-            // });
 
-        // Create subway overlay toggle as checkbox
-        // let subwayLabel = overlayControls
-        //     .append("label")
-        //     .attr("class", "filter-label");
-
-        // subwayLabel
-        //     .append("input")
-        //     .attr("type", "checkbox")
-        //     .attr("id", "subway-toggle")
-        //     .on("change", toggleSubwayOverlay);
-        
-        // subwayLabel.append("span").text("Show Subway Routes");
-        // OLD CODE FOR SUBWAY ROUTE TOGGLE 
             overlayControls
                 .append("button")
                 .attr("id", "subway-toggle")
@@ -483,6 +489,71 @@ const renderMap = async function() {
     }
     let barColorScale = drawBar();
 
+    //draw horizontal bar
+    const initial_vehicle_data = {
+        "Has Vehicle": 0.45,
+        "No Vehicle": 0.55
+    };
+
+    function drawhorizontalBar() {
+        const barChart = d3.select("#neighborhood_viz")
+            .append("g")
+            .attr("id", "car-bar")
+            .attr("transform", `translate(50, 150)`);  
+       
+        const barHeight = 30;
+        const barWidth = 200;  
+    
+        const initial_vehicle_counts = Object.entries(initial_vehicle_data).map(([key, value]) => ({
+            key: key,
+            value: value,
+            width: value * barWidth
+        }));
+    
+        barChart.selectAll('rect')
+            .data(initial_vehicle_counts)
+            .join('rect')
+            .attr('x', (d, i) => i * initial_vehicle_counts[0].width)
+            .attr('y', 0)
+            .attr('width', d => d.width)
+            .attr('height', barHeight)
+            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange")
+            .attr("stroke", "black")
+            .style("stroke-width", "1px");
+    }
+    
+    function updatehorizontalBar(ntaname) {
+        const vehicle_counts = getACSData(ntaname);
+        
+        const vehicle_dict = {
+            "Has Vehicle": vehicle_counts,
+            "No Vehicle": 1 - vehicle_counts
+        };
+    
+        const barWidth = 200; 
+        
+        const horizontalbarData = Object.entries(vehicle_dict).map(([key, value]) => ({
+            key: key,
+            value: value,
+            width: value * barWidth
+        }));
+    
+        d3.select("#car-bar").selectAll('rect')
+            .data(horizontalbarData)
+            .join('rect')
+            .transition()
+            .duration(200)
+            .attr('x', (d, i) => i === 0 ? 0 : horizontalbarData[0].width)
+            .attr('width', d => d.width)
+            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange");
+
+
+        //update the name selected:
+        d3.select("#NTAProfileName").text(ntaname)
+    }
+
+    drawhorizontalBar();
+
     //--handling function for the clickers--
     // function filterClick(button, filterType) {
     function filterClick(checkbox, filterType) {
@@ -529,51 +600,7 @@ const renderMap = async function() {
                 }
             }
         }
-        // if (filterType === 'borough') { 
-        //     if (fil.attr("clicked") == "true") {
-        //         if (data_filter['boros'].includes(fil.attr("name"))) {
-        //             data_filter['boros'].splice(data_filter['boros'].indexOf(fil.attr("name")), 1);
-        //         }
-        //         fil.style("background-color", "white");
-        //         fil.attr("clicked", false);
-        //     } else {
-        //         data_filter['boros'].push(fil.attr("name"));
-        //         fil.attr("clicked", true);
-        //         fil.style("background-color", "#ffc63d");
-        //     }
-        // } else if (filterType === 'rider') {
-        //     if (fil.attr("clicked") == "true") {
-        //       selection_code = name_map[fil.attr("name")];
-        //       fil.style("background-color", "white");
-        //       fil.attr("clicked", false);
-        //       if (data_filter['ride_type'].includes(selection_code)) {
-        //         data_filter['ride_type'].splice(data_filter['ride_type'].indexOf(selection_code), 1);
-        //       }
-        //     } else {
-        //       selection_code = name_map[fil.attr("name")];
-        //       fil.attr("clicked", true);
-        //       fil.style("background-color", "#ffc63d");
-        //       if (!data_filter['ride_type'].includes(selection_code)) {
-        //         data_filter['ride_type'].push(selection_code);
-        //       };
-        //     }
-        // } else {
-        //   if (fil.attr("clicked") == "true") {
-        //     selection_code = name_map[fil.attr("name")];
-        //     fil.style("background-color", "white");
-        //     fil.attr("clicked", false);
-        //     if (data_filter['bike_type'].includes(selection_code)) {
-        //       data_filter['bike_type'].splice(data_filter['bike_type'].indexOf(selection_code), 1);
-        //     }
-        //   } else {
-        //     selection_code = name_map[fil.attr("name")];
-        //     fil.attr("clicked", true);
-        //     fil.style("background-color", "#ffc63d");
-        //     if (!data_filter['bike_type'].includes(selection_code)) {
-        //       data_filter['bike_type'].push(selection_code);
-        //     };
-        //   }
-        // } 
+
         updateMap();
         updateBarChart();
     } 
@@ -723,10 +750,6 @@ const renderMap = async function() {
             "boros": ["Manhattan", "Brooklyn", "Queens", "Bronx"]
         }
         
-        // Reset all buttons to selected state (yellow)
-        // d3.selectAll(".borough-filter, .rider-filter, .bike-filter, #subway-toggle")
-        //     .style("background-color", "#ffc63d")
-        //     .attr("clicked", "true");
         
         // Reset all checkboxes to checked state
         d3.selectAll(".borough-filter, .rider-filter, .bike-filter, #subway-toggle")
@@ -743,11 +766,31 @@ const renderMap = async function() {
         d3.select("#subway-toggle")
             .text("Hide Subway Routes");
         
+        // Reset horizontal bar
+        const barWidth = 200;
+        const barData = Object.entries(initial_vehicle_data).map(([key, value]) => ({
+            key: key,
+            value: value,
+            width: value * barWidth
+        }));
+    
+        d3.select("#car-bar").selectAll('rect')
+            .data(barData)
+            .join('rect')
+            .transition()
+            .duration(200)
+            .attr('x', (d, i) => i === 0 ? 0 : barData[0].width)
+            .attr('width', d => d.width)
+            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange")
         // Update visualizations with reset state
+        d3.select("#NTAProfileName").text("New York City")
+
+        d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
+
         updateMap();
         updateBarChart();
     }
-
+ 
     // Subway overlay toggle handler
     function toggleSubwayOverlay() {
         let button = d3.select("#subway-toggle");
@@ -766,6 +809,37 @@ const renderMap = async function() {
         
         updateMap();
     }
+
+    //return the relevent acs data
+    function getNeighborhoodInfo (nta_name){
+        let share_no_car = ACS_NTA[nta_name]['vehicle_0']/ACS_NTA[nta_name]['vehicle_total']
+        let modeshares = {
+            "Driving": ACS_NTA[nta_name]['work_transit_drove'],
+            "Public Transit": ACS_NTA[nta_name]['work_transit_public_transit'],
+            "Biking": ACS_NTA[nta_name]['work_transit_bike'],
+            "Walking": ACS_NTA[nta_name]['work_transit_walked'],
+            "Other": ACS_NTA[nta_name]['work_transit_other'],
+            "Work From Home": ACS_NTA[nta_name]['work_transit_home']
+        }
+
+        let highestModeShare = modeshares.keys(data)
+                                    .reduce((a, b) => data[a] > data[b] ? a : b);
+
+        let bike_mode_share = ACS_NTA[nta_name]['work_transit_bike']/ACS_NTA[nta_name]['work_transit_total']
+
+    
+    }
+
+
+    function getACSData(nta_name){
+        num_no_car = ACS_NTA[nta_name]['vehicle_0']
+        total_car = ACS_NTA[nta_name]['vehicle_total']
+        share_car = 1-(num_no_car/total_car)
+
+        return share_car
+    }
+
+    
 };
 
 
@@ -774,7 +848,7 @@ const renderMap = async function() {
 renderMap();
 
 
-// Add this function to update the legend
+// updating the legend
 function updateLegend(colorScale) {
     const mapSvg = d3.select("#citibike_map");
     const legendWidth = 200;
