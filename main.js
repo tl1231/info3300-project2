@@ -4,21 +4,17 @@ let boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
 let riderTypes = ["Member", "Casual"];
 let bikeTypes = ["Regular", "E-Bike"];
 
+
 //setting initial global variables
 let monthBrush;
 let hourBrush;
-
-let bikeDataBoro;  
-let neighborhoodFeatures;
-let subwayFeature;
-let citiBikeData;
 
 let mapSvg = d3.select("#citibike_map");
 let width = mapSvg.attr("width");
 let height = mapSvg.attr("height");
 let margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
-
+//this is where all of the modifiers change data and updates are based on this data
 var data_filter = {
     "hour_start": 0,
     "hour_end": 23,
@@ -32,7 +28,7 @@ var data_filter = {
 
 // CREATE BAR CHART
 let barChart = d3.select("svg#bar-chart");
-let barMargin = { top: 5, right: 0, bottom: 45, left: 70 }; // adjust
+let barMargin = { top: 5, right: 0, bottom: 45, left: 70 }; 
 let barWidth = barChart.attr("width");
 let barHeight = barChart.attr("height");
 let barChartWidth = barWidth - barMargin.left - barMargin.right;
@@ -53,7 +49,6 @@ annotations.append("g")
                 "transform", 
                 `translate(${barMargin.left}, ${barChartHeight + barMargin.top + 10})`
             )
-            // .call(bottomAxis);
 
 let leftAxis = d3.axisLeft();
 let leftGridlines = d3.axisLeft()
@@ -135,7 +130,11 @@ let renderMap = async function() {
         .on("click", function(event, d) {
             updateNTAProfile(d.properties.ntaname);
         
-            d3.selectAll(".neighborhood").style("stroke-width", "0.3px");
+            selectedNTA = this;
+            
+            d3.selectAll(".neighborhood")
+                .style("stroke-width", "0.3px")
+                .style("stroke","#D3D3D3");
             d3.select(this)
                 .style("stroke-width", "1px")
                 .style("stroke","black");
@@ -749,6 +748,8 @@ let renderMap = async function() {
     //function to dynamically update map with filters
     function updateMap() {
 
+        console.log("hasrunnnn")
+
         let filteredRides = parseRidershipNH();
 
         let maxRides = Math.max(1, d3.max(Object.values(filteredRides)));
@@ -759,10 +760,13 @@ let renderMap = async function() {
             .selectAll("path.neighborhood")
             .transition()
             .duration(200)
+            .style("stroke-width", "0.3px")
+            .style("stroke","#D3D3D3")
             .attr("fill", d => {
                 let rides = filteredRides[d.properties.ntaname] || 0;
                 return colorScale(rides);
             });
+        
     
         updateLegend(colorScale);
 
@@ -852,7 +856,8 @@ let renderMap = async function() {
         
         // Reset subway toggle
         d3.select("#subway-toggle")
-            .text("Hide Subway Routes");
+            .text("Hide Subway Routes")
+            .style("background-color", "#FFC63D");
         
         // Reset horizontal bar
         const barWidth = 300;
@@ -880,7 +885,7 @@ let renderMap = async function() {
         
         
             // Update visualizations with reset state
-        d3.select("#NTAProfileName").text("New York City")
+        d3.select("#NTAProfileName").html("New York City<br>(click on neighborhood for details)")
 
         d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
 
@@ -900,7 +905,7 @@ let renderMap = async function() {
         } else {
             data_filter['showSubwayOverlay'] = true;
             button.attr("clicked", "true")
-                    .style("background-color", "#E29344")
+                    .style("background-color", "#ffc63d")
                     .text("Hide Subway Routes");
         }
         

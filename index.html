@@ -6,6 +6,7 @@
 <body>
     <div id="header">
         <h1>CitiBike Usage in New York City</h1>
+        <p>Developed by Nicholas Wilsey (nhw34), Jonathan Mak (jcm533), and Tiffany Lee (tl559)</p>
     </div>
     <main>
          <!-- Filters -->
@@ -45,8 +46,9 @@
             </div>
             <!-- Svgs, divs for our visualizations (map, bar charts)-->
             <div class="visualizations">
-                <div style="margin:0">
-                    <svg id="citibike_map" height="700" width="600" style="background: rgb(237, 237, 237); margin-top:20px; border-radius:10px"></svg>
+                <div style="margin:0; padding-top:20px">
+                    <h4 id="ridershipByNeighborhood_name"><strong>Ridership by Neighborhood</strong></h4>
+                    <svg id="citibike_map" height="700" width="600" style="background: rgb(237, 237, 237); border-radius:10px"></svg>
                 </div>
             <div class="contextArea" style="margin:0">
                 <div class="barchartContainer">
@@ -54,18 +56,17 @@
                     <svg id="bar-chart" height="400" width="500"></svg>
                 </div>
                 <div class="neighborhoodContainer">
-                    <h4 id = "pie_chart_name"><strong>Neighborhood Profile: </strong><span id="NTAProfileName">New York City</span></h4>
+                    <h4 id = "pie_chart_name"><strong>Neighborhood Profile: </strong><span id="NTAProfileName">New York City <br> (click on neighborhood for details)</span></h4>
                     <svg id="neighborhood_viz" height="93" width="500"></svg>
-                    <p>Top Commute Mode Share: <strong><span id="NTAProfileTopShare">Public Transit</span></strong></p>
-                    <p>Bike Commute Mode Share: <strong><span id="NTAProfileBikeShare">0.8%</span></strong></p>
+                    <p>Top Commute Mode Share: <span id="NTAProfileTopShare">Public Transit</span></p>
+                    <p>Bike Commute Mode Share: <span id="NTAProfileBikeShare">0.8%</span></p>
                 </div>
             </div>
     
         </div>
        
     </main>
-   <!--Run functions and main-->
-    <script src="functions.js"></script>
+   <!--Run main js-->
     <script src="main.js"></script>
 </body>
 
