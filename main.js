@@ -1,10 +1,10 @@
 //----------Part 1: drawing the inital view on the page
 // setting up filter options and selections
-const boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
-const riderTypes = ["Member", "Casual"];
-const bikeTypes = ["Regular", "E-Bike"];
+let boroughs = ["Manhattan", "Brooklyn", "Queens", "Bronx"];
+let riderTypes = ["Member", "Casual"];
+let bikeTypes = ["Regular", "E-Bike"];
 
-
+//setting initial global variables
 let monthBrush;
 let hourBrush;
 
@@ -13,10 +13,10 @@ let neighborhoodFeatures;
 let subwayFeature;
 let citiBikeData;
 
-const mapSvg = d3.select("#citibike_map");
-const width = mapSvg.attr("width");
-const height = mapSvg.attr("height");
-const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+let mapSvg = d3.select("#citibike_map");
+let width = mapSvg.attr("width");
+let height = mapSvg.attr("height");
+let margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
 
 var data_filter = {
@@ -31,12 +31,12 @@ var data_filter = {
 }
 
 // CREATE BAR CHART
-const barChart = d3.select("svg#bar-chart");
-const barMargin = { top: 0, right: 30, bottom: 45, left: 70 }; // adjust
-const barWidth = barChart.attr("width");
-const barHeight = barChart.attr("height");
-const barChartWidth = barWidth - barMargin.left - barMargin.right;
-const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
+let barChart = d3.select("svg#bar-chart");
+let barMargin = { top: 5, right: 0, bottom: 45, left: 70 }; // adjust
+let barWidth = barChart.attr("width");
+let barHeight = barChart.attr("height");
+let barChartWidth = barWidth - barMargin.left - barMargin.right;
+let barChartHeight = barHeight - barMargin.top - barMargin.bottom;
 
 let annotations = barChart.append("g").attr("id", "annotations1");
 let chartArea = barChart.append("g")
@@ -75,10 +75,10 @@ barChart.selectAll("text")
 
 
 // Main function that contains the data within it
-const renderMap = async function() {
+let renderMap = async function() {
 
     // Load all datasets
-    const [neighborhoods, bikeDataNTA, subways, bikeDataBoro,ACS_NTA] = await Promise.all([
+    let [neighborhoods, bikeDataNTA, subways, bikeDataBoro,ACS_NTA] = await Promise.all([
         d3.json("data/2020 Neighborhood Tabulation Areas (NTAs).geojson"), 
         d3.json("data/counts_by_ntaname.json"),
         d3.json("data/Subway_Lines.geojson"),
@@ -100,17 +100,17 @@ const renderMap = async function() {
 
     // Initial setup:
     let ridesByNeighborhood = parseRidershipNH(bikeDataNTA);
-    const colorScale = d3.scaleSequential(d3.interpolateBlues)
+    let colorScale = d3.scaleSequential(d3.interpolateBlues)
                           .domain([0, d3.max(Object.values(ridesByNeighborhood))]);
     console.log(Object.values(ridesByNeighborhood));
     currentColorScale = colorScale;
 
     // Map Setup
-    const projection = d3.geoMercator()
+    let projection = d3.geoMercator()
                         .fitSize([width - margin.left - margin.right, 
                                     height - margin.top - margin.bottom], 
                                     neighborhoods);
-    const path = d3.geoPath().projection(projection);
+    let path = d3.geoPath().projection(projection);
 
     const neighborhoodLayer = mapSvg.append("g")
         .attr("class", "neighborhood-layer")
@@ -138,14 +138,14 @@ const renderMap = async function() {
             d3.selectAll(".neighborhood").style("stroke-width", "0.3px");
             d3.select(this)
                 .style("stroke-width", "1px")
-                .style("stroke","gray");
+                .style("stroke","black");
         })
         .append("title")
         .text(d => {
             const rides = ridesByNeighborhood[d.properties.ntaname] || 0;
             return `${d.properties.ntaname}\nTotal Rides: ${rides.toLocaleString()}`; 
         });
-
+    //Create subway routes
     subwayLayer.selectAll("path")
         .data(subways.features)
         .join("path")
@@ -195,14 +195,14 @@ const renderMap = async function() {
     }
 
     // Add legend
-    const legendWidth = 200;
-    const legendHeight = 10;
-    const legend = mapSvg.append("g")
+    let legendWidth = 200;
+    let legendHeight = 10;
+    let legend = mapSvg.append("g")
         .attr("transform", `translate(${margin.left}, ${height - margin.bottom - 40})`);
 
     // Create gradient for legend
-    const defs = mapSvg.append("defs");
-    const linearGradient = defs.append("linearGradient")
+    let defs = mapSvg.append("defs");
+    let linearGradient = defs.append("linearGradient")
         .attr("id", "legend-gradient");
 
     // Add legend axis
@@ -215,27 +215,27 @@ const renderMap = async function() {
     //--TIME SLIDER CREATION--
     function drawSliders(){
         // Time slider setup with adjusted dimensions
-        const control = d3.select("#control");
-        const controlWidth = 600;
-        const controlHeight = 90;  // Increased to accommodate two sliders
-        const slidermargin = {
+        let control = d3.select("#control");
+        let controlWidth = 600;
+        let controlHeight = 90;  // Increased to accommodate two sliders
+        let slidermargin = {
             top: 5,
             right: 30,
             bottom: 50,
             left: 90
         };
 
-        const controlSvg = control.append("svg")
+        let controlSvg = control.append("svg")
             .attr("width", controlWidth)
             .attr("height", controlHeight + slidermargin.bottom);
 
         // Create scale for the month slider
-        const monthScale = d3.scaleLinear()
+        let monthScale = d3.scaleLinear()
             .domain([1, 12])
             .range([slidermargin.left, controlWidth - slidermargin.right]);
 
         // Create scale for the hour slider
-        const hourScale = d3.scaleLinear()
+        let hourScale = d3.scaleLinear()
             .domain([0, 23])
             .range([slidermargin.left, controlWidth - slidermargin.right]);
 
@@ -261,13 +261,13 @@ const renderMap = async function() {
             .call(hourBrush);
 
         // Add axes
-        const monthAxis = d3.axisBottom(monthScale)
+        let monthAxis = d3.axisBottom(monthScale)
             .tickFormat(d => {
                 return d3.timeFormat("%B")(new Date(2023, d-1));
             })
             .ticks(12);
 
-        const hourAxis = d3.axisBottom(hourScale)
+        let hourAxis = d3.axisBottom(hourScale)
             .tickFormat(d => d + ":00")
             .ticks(24);
 
@@ -431,7 +431,7 @@ const renderMap = async function() {
         // Get ridership by borough with time parameters
         let ridershipByBoro = parseRidershipBoro();
     
-        const boroughRideCounts = Object.entries(ridershipByBoro).map(([borough, count]) => ({
+        let boroughRideCounts = Object.entries(ridershipByBoro).map(([borough, count]) => ({
             borough: borough,
             count: count
         }));
@@ -444,13 +444,13 @@ const renderMap = async function() {
             .padding([0.2]);
     
         // y-axis scale for ride counts
-        const countExtent = d3.extent(boroughRideCounts, d => d.count);
+        let countExtent = d3.extent(boroughRideCounts, d => d.count);
         var countScale = d3.scaleLinear()
             .domain([0, countExtent[1]])
             .range([barChartHeight, 0]); 
     
         // color scale for boroughs
-        const barColorScale = d3.scaleOrdinal()
+        let barColorScale = d3.scaleOrdinal()
                 .domain(boroughRideCounts.map(d => d.borough))
                 .range(["#D96C4D", "#6DBF73", "#4C8FD9", "#D96BB1"])
     
@@ -492,11 +492,11 @@ const renderMap = async function() {
     let barColorScale = drawBar();
 
     //draw horizontal bar
-    const initial_vehicle_data = {
+    let initial_vehicle_data = {
         "No Vehicle": 0.46,
         "Has Vehicle": 0.54
     };
-
+    
     function updateNTAProfile(ntaname){
         NTA_into = getNeighborhoodInfo(ntaname);
         d3.select("#NTAProfileName").text(ntaname)
@@ -504,10 +504,20 @@ const renderMap = async function() {
         if (Number.isNaN(NTA_into['bikeModeShare'])){
             d3.select("#NTAProfileTopShare").text("No Data :(")
             d3.select("#NTAProfileBikeShare").text("No Data :(")
+            updatehorizontalBarNoData();
+
+            d3.select("#share_no_vehicle_text").text("Share of households with no vehicle: No Data")
+            d3.select("#share_vehicle_text").text("Share of households with 1+ vehicles: No Data")
 
         } else {
             let bike_share = (NTA_into['bikeModeShare']*100).toFixed(2);
             let bike_share_str= `${bike_share}%`
+
+            let share_no_car = (NTA_into['shareNoCar']*100).toFixed(2)
+            let share_car = (100-NTA_into['shareNoCar']*100).toFixed(2)
+
+            d3.select("#share_no_vehicle_text").text(`Share of households with no vehicle: ${share_no_car}%`)
+            d3.select("#share_vehicle_text").text(`Share of households with 1+ vehicles: ${share_car}%`)
 
             //updating the names in the NTA profile on the index.html:
             
@@ -520,14 +530,14 @@ const renderMap = async function() {
     }
 
     function drawhorizontalBar() {
-        const barChart = d3.select("#neighborhood_viz")
+        let barChart = d3.select("#neighborhood_viz")
             .append("g")
             .attr("id", "car-bar");  
        
         let carbarHeight = 30;
         let carbarWidth = 300;  
     
-        const initial_vehicle_counts = Object.entries(initial_vehicle_data).map(([key, value]) => ({
+        let initial_vehicle_counts = Object.entries(initial_vehicle_data).map(([key, value]) => ({
             key: key,
             value: value,
             width: value * carbarWidth
@@ -544,7 +554,7 @@ const renderMap = async function() {
             .attr("stroke", "black")
             .style("stroke-width", "1px");
 
-        const legend = d3.select('#neighborhood_viz')
+        let legend = d3.select('#neighborhood_viz')
             .append("g")
             .attr("id", "car-legend")
             .attr("transform", `translate(0, ${carbarHeight + 15})`);  
@@ -559,6 +569,7 @@ const renderMap = async function() {
         legend.append("text")
             .attr("x", 22)
             .attr("y", 12)
+            .attr("id", "share_no_vehicle_text")
             .text("Share of households with no vehicle: 46%")
             .style("font-size", "16px");
 
@@ -572,6 +583,7 @@ const renderMap = async function() {
         legend.append("text")
             .attr("x", 22)
             .attr("y", 42)
+            .attr("id", "share_vehicle_text")
             .text("Share of households with 1+ vehicles: 54%")
             .style("font-size", "16px");
 
@@ -584,9 +596,9 @@ const renderMap = async function() {
             "Has Vehicle": 1 - shareNoCar
         };
     
-        const barWidth = 300; 
+        let barWidth = 300; 
         
-        const horizontalbarData = Object.entries(vehicle_dict).map(([key, value]) => ({
+        let horizontalbarData = Object.entries(vehicle_dict).map(([key, value]) => ({
             key: key,
             value: value,
             width: value * barWidth
@@ -600,13 +612,31 @@ const renderMap = async function() {
             .attr('x', (d, i) => i === 0 ? 0 : horizontalbarData[0].width)
             .attr('width', d => d.width)
             .attr('fill', d => d.key === "Has Vehicle" ? "#4381D9" : "#E29344");
-
-
-        
     }
 
     function updatehorizontalBarNoData() {
 
+        let vehicle_dict = {
+            "No Vehicle": 0,
+            "Has Vehicle": 1
+        };
+    
+        let barWidth = 300; 
+        
+        let horizontalbarData = Object.entries(vehicle_dict).map(([key, value]) => ({
+            key: key,
+            value: value,
+            width: value * barWidth
+        }));
+        
+        d3.select("#car-bar").selectAll('rect')
+            .data(horizontalbarData)
+            .join('rect')
+            .transition()
+            .duration(200)
+            .attr('x', (d, i) => i === 0 ? 0 : horizontalbarData[0].width)
+            .attr('width', d => d.width)
+            .attr('fill', d => "white");
     }
 
 
@@ -662,7 +692,7 @@ const renderMap = async function() {
         updateMap();
         updateBarChart();
     } 
-
+    //Interpret data from json
     function parseRidershipNH(){
 
         let counts = {}
@@ -692,7 +722,7 @@ const renderMap = async function() {
 
         return counts
     };
-
+    //Interpret data from json
     function parseRidershipBoro(){
 
         let counts = {}
@@ -716,13 +746,13 @@ const renderMap = async function() {
         });
         return counts
     };
-
+    //function to dynamically update map with filters
     function updateMap() {
 
         let filteredRides = parseRidershipNH();
 
-        const maxRides = Math.max(1, d3.max(Object.values(filteredRides)));
-        const colorScale = d3.scaleSequential(d3.interpolateBlues)
+        let maxRides = Math.max(1, d3.max(Object.values(filteredRides)));
+        let colorScale = d3.scaleSequential(d3.interpolateBlues)
             .domain([0, maxRides]);
     
         mapSvg.select(".neighborhood-layer")
@@ -730,7 +760,7 @@ const renderMap = async function() {
             .transition()
             .duration(200)
             .attr("fill", d => {
-                const rides = filteredRides[d.properties.ntaname] || 0;
+                let rides = filteredRides[d.properties.ntaname] || 0;
                 return colorScale(rides);
             });
     
@@ -825,7 +855,7 @@ const renderMap = async function() {
             .text("Hide Subway Routes");
         
         // Reset horizontal bar
-        const barWidth = 200;
+        const barWidth = 300;
         const barData = Object.entries(initial_vehicle_data).map(([key, value]) => ({
             key: key,
             value: value,
@@ -840,7 +870,16 @@ const renderMap = async function() {
             .attr('x', (d, i) => i === 0 ? 0 : barData[0].width)
             .attr('width', d => d.width)
             .attr('fill', d => d.key === "Has Vehicle" ? "#4381D9" : "#E29344")
-        // Update visualizations with reset state
+            
+
+        d3.select("#share_no_vehicle_text").text("Share of households with no vehicle: 46%")
+        d3.select("#share_vehicle_text").text("Share of households with 1+ vehicles: 54%")
+        d3.select("#NTAProfileTopShare").text("Public Transt")
+        d3.select("#NTAProfileBikeShare").text("0.8%")
+
+        
+        
+            // Update visualizations with reset state
         d3.select("#NTAProfileName").text("New York City")
 
         d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
@@ -900,7 +939,7 @@ const renderMap = async function() {
         return returnDict;
     }
 
-
+    //function to get percentages of people per neighborhood that own vehicles
     function getACSData(nta_name){
         num_no_car = ACS_NTA[nta_name]['vehicle_0']
         total_car = ACS_NTA[nta_name]['vehicle_total']
@@ -918,11 +957,11 @@ const renderMap = async function() {
 renderMap();
 
 
-// updating the legend
+// updating the legend to changes in the map
 function updateLegend(colorScale) {
-    const mapSvg = d3.select("#citibike_map");
-    const legendWidth = 200;
-    const legendHeight = 10; 
+    let mapSvg = d3.select("#citibike_map");
+    let legendWidth = 200;
+    let legendHeight = 10; 
     
     const legendScale = d3.scaleLinear()
         .domain(colorScale.domain())
@@ -959,7 +998,7 @@ function updateLegend(colorScale) {
         .join("g")
         .attr("class", "legend")
         .attr("transform", `translate(${margin.left}, ${height - margin.bottom - 40})`);
-
+    //add background, 
     legend.selectAll("rect.legend-background")
         .data([0])
         .join("rect")

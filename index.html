@@ -38,14 +38,12 @@
                 </div>
                 <div class="BackgroundInfo">
                     <h4><strong>Background Information</strong></h4>
-                    <p>For our project, we will look at CitiBike usage in New York City neighborhoods and compare the concentration of rides starting at each neighborhood. 
-                        We want to see if CitiBikes are an effective alternative means of transportation by visualizing it against the NYC Subway System and the 
-                        percentage of people who own a car in each neighborhood tabulation area.
+                    <p>This visualization shows CitiBike usage patterns across New York City neighborhoods, focusing on rides, subway access, and car ownership. Filter by borough, rider type, bike type, month, and time of day to explore trends. Zoom in on neighborhoods to see profiles with data on car ownership and commuting habits.
                     </p>
                     <!-- <div id="profile"></div> -->
                 </div>
             </div>
-
+            <!-- Svgs, divs for our visualizations (map, bar charts)-->
             <div class="visualizations">
                 <div style="margin:0">
                     <svg id="citibike_map" height="700" width="600" style="background: rgb(237, 237, 237); margin-top:20px; border-radius:10px"></svg>
@@ -53,12 +51,12 @@
             <div class="contextArea" style="margin:0">
                 <div class="barchartContainer">
                     <h4 id="bar_chart_name"><strong>Ridership by Borough</strong></h4>
-                    <svg id="bar-chart" height="400" width="450"></svg>
+                    <svg id="bar-chart" height="400" width="500"></svg>
                 </div>
                 <div class="neighborhoodContainer">
                     <h4 id = "pie_chart_name"><strong>Neighborhood Profile: </strong><span id="NTAProfileName">New York City</span></h4>
-                    <svg id="neighborhood_viz" height="93" width="450"></svg>
-                    <p>Top Commute Mode Share: <strong><span id="NTAProfileTopShare">32%</span></strong></p>
+                    <svg id="neighborhood_viz" height="93" width="500"></svg>
+                    <p>Top Commute Mode Share: <strong><span id="NTAProfileTopShare">Public Transit</span></strong></p>
                     <p>Bike Commute Mode Share: <strong><span id="NTAProfileBikeShare">0.8%</span></strong></p>
                 </div>
             </div>
@@ -66,7 +64,7 @@
         </div>
        
     </main>
-   
+   <!--Run functions and main-->
     <script src="functions.js"></script>
     <script src="main.js"></script>
 </body>
