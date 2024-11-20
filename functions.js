@@ -1,6 +1,7 @@
 //----------parse citibike data based on paremeters---------
 //rider-type can either be "all", "m", or "c"
 //bike-type can either be "all", "cb", or "eb"
+//Interpret data from json
 function parseRidershipNH(ridership_by_nta, start_hour=0, end_hour=23, start_month=1, end_month=12, rider_type="all", bike_type="all"){
   //loop over hours
   let rider_array;
@@ -40,7 +41,7 @@ function parseRidershipNH(ridership_by_nta, start_hour=0, end_hour=23, start_mon
 
 
 
-
+//Interpret data from json
 function parseRidershipBoro(ridership_by_boro, start_hour=0, end_hour=23, start_month=1, end_month=12, rider_type="all", bike_type="all"){
   //loop over hours
   let rider_array;
@@ -158,12 +159,12 @@ function drawSlider(){
   let min_date = new Date(2013, 0, 1);
   let max_date = new Date(2023, 11, 31);
 
-  // Time slider setup with adjusted dimensions
+  // Time slider
   const control = d3.select("#control");
   const controlWidth = 600;
-  const controlHeight = 40;  // Reduced from 80
+  const controlHeight = 40;  
   const margin = {
-      top: 5,     // Reduced from 10
+      top: 5,     
       right: 30, 
       bottom: 50, 
       left: 30
@@ -171,7 +172,7 @@ function drawSlider(){
 
   const controlSvg = control.append("svg")
       .attr("width", controlWidth)
-      .attr("height", controlHeight + margin.bottom);  // Total height is now 90px (40 + 50)
+      .attr("height", controlHeight + margin.bottom); 
 
   // Create scales for the time slider
   const timeScale = d3.scaleTime()
@@ -251,15 +252,6 @@ function filterClick(button, filterType) {
           fil.style("background-color", "#ffc63d");
       }
   } else {
-      // if (fil.attr("clicked") == "true") {
-      //     filteredRiderType = filteredRiderType.filter(t => t !== fil.attr("name"));
-      //     fil.style("background-color", "white");
-      //     fil.attr("clicked", false);
-      // } else {
-      //     filteredRiderType.push(fil.attr("name"));
-      //     fil.attr("clicked", true);
-      //     fil.style("background-color", "#ffc63d");
-      // }
       console.log("changed bike type")
   }  
   
@@ -286,67 +278,14 @@ function toggleSubwayOverlay() {
 
 // Functions to show/hide subway lines
 function showSubwayLines() {
-  // Add your subway visualization code here
-  // For example:
       d3.selectAll(".subway")
           .attr("visibility", "visible");
   }
   
   function hideSubwayLines() {
-  // Add your subway hide code here
   d3.selectAll(".subway")
       .attr("visibility", "hidden");
   }
 
 
-// Create Bar Chart
-// function createBarChart() {
-//     const barChart = d3.select("#bar-chart");
-    
-//     const barMargin = { top: 10, right: 30, bottom: 90, left: 70 }; // adjust
-//     const barWidth = barChart.attr("width");
-//     const barHeight = barChart.attr("height");
-//     const barChartWidth = barWidth - barMargin.left - barMargin.right;
-//     const barChartHeight = barHeight - barMargin.top - barMargin.bottom;
 
-//     let annotations = barChart.append("g").attr("id", "annotations1");
-//     let chartArea = barChart.append("g").attr("id", "points")
-//             .attr("transform", "translate(" + barMargin.left + "," + barMargin.top + ")");
-
-//     // Aggregate trips by borough
-//     const boroughData = boroughs.map(borough => ({
-//         borough,
-//         count: Object.entries(filteredData)
-//             .filter(([neighborhood]) => neighborhood.includes(borough))
-//             .reduce((sum, [, trips]) => sum + trips, 0)
-//     }));
-
-//     const xScale = d3.scaleBand()
-//         .domain(boroughData.map(d => d.borough))
-//         .range([margin.left, width - margin.right])
-//         .padding(0.2);
-
-//     const yScale = d3.scaleLinear()
-//         .domain([0, d3.max(boroughData, d => d.count)])
-//         .range([height - margin.bottom, margin.top]);
-
-//     // Axes
-//     svg.append("g")
-//         .attr("transform", `translate(0,${height - margin.bottom})`)
-//         .call(d3.axisBottom(xScale));
-
-//     svg.append("g")
-//         .attr("transform", `translate(${margin.left},0)`)
-//         .call(d3.axisLeft(yScale));
-
-//     // Bars
-//     svg.selectAll(".bar")
-//         .data(boroughData)
-//         .join("rect")
-//         .attr("class", "bar")
-//         .attr("x", d => xScale(d.borough))
-//         .attr("y", d => yScale(d.count))
-//         .attr("width", xScale.bandwidth())
-//         .attr("height", d => height - margin.bottom - yScale(d.count))
-//         .attr("fill", "steelblue");
-// }

@@ -130,13 +130,15 @@ const renderMap = async function() {
             const rides = ridesByNeighborhood[d.properties.ntaname] || 0; 
             return colorScale(rides);
         })
-        .attr("stroke", "white")
+        .attr("stroke", "#D3D3D3")
         .attr("stroke-width", "0.5px")
         .on("click", function(event, d) {
-            updatehorizontalBar(d.properties.ntaname);
+            updateNTAProfile(d.properties.ntaname);
         
-            d3.selectAll(".neighborhood").style("stroke-width", "0.5px");
-            d3.select(this).style("stroke-width", "2px");
+            d3.selectAll(".neighborhood").style("stroke-width", "0.3px");
+            d3.select(this)
+                .style("stroke-width", "1px")
+                .style("stroke","gray");
         })
         .append("title")
         .text(d => {
@@ -450,7 +452,7 @@ const renderMap = async function() {
         // color scale for boroughs
         const barColorScale = d3.scaleOrdinal()
                 .domain(boroughRideCounts.map(d => d.borough))
-                .range(["#FF5733", "#33FF57", "#3357FF", "#FF33A1"])
+                .range(["#D96C4D", "#6DBF73", "#4C8FD9", "#D96BB1"])
     
         // --Render axes--
         // Bottom axis
@@ -491,46 +493,98 @@ const renderMap = async function() {
 
     //draw horizontal bar
     const initial_vehicle_data = {
-        "Has Vehicle": 0.45,
-        "No Vehicle": 0.55
+        "No Vehicle": 0.46,
+        "Has Vehicle": 0.54
     };
+
+    function updateNTAProfile(ntaname){
+        NTA_into = getNeighborhoodInfo(ntaname);
+        d3.select("#NTAProfileName").text(ntaname)
+
+        if (Number.isNaN(NTA_into['bikeModeShare'])){
+            d3.select("#NTAProfileTopShare").text("No Data :(")
+            d3.select("#NTAProfileBikeShare").text("No Data :(")
+
+        } else {
+            let bike_share = (NTA_into['bikeModeShare']*100).toFixed(2);
+            let bike_share_str= `${bike_share}%`
+
+            //updating the names in the NTA profile on the index.html:
+            
+            d3.select("#NTAProfileTopShare").text(NTA_into['highestModeShare'])
+            d3.select("#NTAProfileBikeShare").text(bike_share_str)
+
+            
+            updatehorizontalBar(NTA_into["shareNoCar"]);
+        }
+    }
 
     function drawhorizontalBar() {
         const barChart = d3.select("#neighborhood_viz")
             .append("g")
-            .attr("id", "car-bar")
-            .attr("transform", `translate(50, 150)`);  
+            .attr("id", "car-bar");  
        
-        const barHeight = 30;
-        const barWidth = 200;  
+        let carbarHeight = 30;
+        let carbarWidth = 300;  
     
         const initial_vehicle_counts = Object.entries(initial_vehicle_data).map(([key, value]) => ({
             key: key,
             value: value,
-            width: value * barWidth
+            width: value * carbarWidth
         }));
-    
+
         barChart.selectAll('rect')
             .data(initial_vehicle_counts)
             .join('rect')
             .attr('x', (d, i) => i * initial_vehicle_counts[0].width)
             .attr('y', 0)
             .attr('width', d => d.width)
-            .attr('height', barHeight)
-            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange")
+            .attr('height', carbarHeight)
+            .attr('fill', d => d.key === "Has Vehicle" ? "#4381D9" : "#E29344")
             .attr("stroke", "black")
             .style("stroke-width", "1px");
+
+        const legend = d3.select('#neighborhood_viz')
+            .append("g")
+            .attr("id", "car-legend")
+            .attr("transform", `translate(0, ${carbarHeight + 15})`);  
+
+        legend.append("rect")
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("x", 2)
+            .attr("y", 0)
+            .attr("fill", "#E29344");
+
+        legend.append("text")
+            .attr("x", 22)
+            .attr("y", 12)
+            .text("Share of households with no vehicle: 46%")
+            .style("font-size", "16px");
+
+        legend.append("rect")
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("x", 2)
+            .attr("y", 30)
+            .attr("fill", "#4381D9");
+
+        legend.append("text")
+            .attr("x", 22)
+            .attr("y", 42)
+            .text("Share of households with 1+ vehicles: 54%")
+            .style("font-size", "16px");
+
     }
     
-    function updatehorizontalBar(ntaname) {
-        const vehicle_counts = getACSData(ntaname);
+    function updatehorizontalBar(shareNoCar) {
         
-        const vehicle_dict = {
-            "Has Vehicle": vehicle_counts,
-            "No Vehicle": 1 - vehicle_counts
+        let vehicle_dict = {
+            "No Vehicle": shareNoCar,
+            "Has Vehicle": 1 - shareNoCar
         };
     
-        const barWidth = 200; 
+        const barWidth = 300; 
         
         const horizontalbarData = Object.entries(vehicle_dict).map(([key, value]) => ({
             key: key,
@@ -545,12 +599,16 @@ const renderMap = async function() {
             .duration(200)
             .attr('x', (d, i) => i === 0 ? 0 : horizontalbarData[0].width)
             .attr('width', d => d.width)
-            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange");
+            .attr('fill', d => d.key === "Has Vehicle" ? "#4381D9" : "#E29344");
 
 
-        //update the name selected:
-        d3.select("#NTAProfileName").text(ntaname)
+        
     }
+
+    function updatehorizontalBarNoData() {
+
+    }
+
 
     drawhorizontalBar();
 
@@ -781,7 +839,7 @@ const renderMap = async function() {
             .duration(200)
             .attr('x', (d, i) => i === 0 ? 0 : barData[0].width)
             .attr('width', d => d.width)
-            .attr('fill', d => d.key === "Has Vehicle" ? "blue" : "orange")
+            .attr('fill', d => d.key === "Has Vehicle" ? "#4381D9" : "#E29344")
         // Update visualizations with reset state
         d3.select("#NTAProfileName").text("New York City")
 
@@ -803,7 +861,7 @@ const renderMap = async function() {
         } else {
             data_filter['showSubwayOverlay'] = true;
             button.attr("clicked", "true")
-                    .style("background-color", "#ffc63d")
+                    .style("background-color", "#E29344")
                     .text("Hide Subway Routes");
         }
         
@@ -822,12 +880,24 @@ const renderMap = async function() {
             "Work From Home": ACS_NTA[nta_name]['work_transit_home']
         }
 
-        let highestModeShare = modeshares.keys(data)
-                                    .reduce((a, b) => data[a] > data[b] ? a : b);
+        let highestModeShare;
+        let maxValue=0;
+        Object.keys(modeshares).forEach(key => {
+            if (modeshares[key] > maxValue) {
+                maxValue = modeshares[key];
+                highestModeShare = key;
+            }
+        });
 
         let bike_mode_share = ACS_NTA[nta_name]['work_transit_bike']/ACS_NTA[nta_name]['work_transit_total']
 
-    
+        let returnDict = {
+            "shareNoCar": share_no_car,
+            "highestModeShare": highestModeShare,
+            "bikeModeShare": bike_mode_share
+        };
+
+        return returnDict;
     }
 
 
@@ -852,29 +922,77 @@ renderMap();
 function updateLegend(colorScale) {
     const mapSvg = d3.select("#citibike_map");
     const legendWidth = 200;
+    const legendHeight = 10; 
     
     const legendScale = d3.scaleLinear()
         .domain(colorScale.domain())
         .range([0, legendWidth]);
     
     const legendAxis = d3.axisBottom(legendScale)
-        .ticks(5)
+        .ticks(4)
         .tickFormat(d3.format(",.0f"));
     
-    mapSvg.select(".legend-axis")
-        .transition()
-        .duration(200)
-        .call(legendAxis);
+    let defs = mapSvg.selectAll("defs").data([0]).join("defs");
     
-    // Update gradient
-    const linearGradient = mapSvg.select("#legend-gradient");
-    
-    linearGradient.selectAll("stop")
-        .data(colorScale.ticks().map((t, i, n) => ({ 
-            offset: `${i*100/n.length}%`,
-            color: colorScale(t) 
-        })))
+    let gradient = defs.selectAll("linearGradient")
+        .data([0])
+        .join("linearGradient")
+        .attr("id", "legend-gradient")
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%");
+
+    const stops = d3.range(0, 1.1, 0.1).map(t => ({
+        offset: `${t * 100}%`,
+        color: d3.interpolateBlues(t)
+    }));
+
+    gradient.selectAll("stop")
+        .data(stops)
         .join("stop")
         .attr("offset", d => d.offset)
         .attr("stop-color", d => d.color);
+
+    const legend = mapSvg.selectAll("g.legend")
+        .data([0])
+        .join("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(${margin.left}, ${height - margin.bottom - 40})`);
+
+    legend.selectAll("rect.legend-background")
+        .data([0])
+        .join("rect")
+        .attr("class", "legend-background")
+        .attr("x", -8)
+        .attr("y", -25)  
+        .attr("width", legendWidth + 20)
+        .attr("height", 70)  
+        .attr("fill", "#f0f0f0")  
+        .attr("rx", 5) 
+        .attr("ry", 5);
+
+    legend.selectAll("text.legend-title")
+        .data([0])
+        .join("text")
+        .attr("class", "legend-title")
+        .attr("x", 0)
+        .attr("y", -8) 
+        .style("font-size", "10px")
+        .text("Trip Origins per Neighborhood:");
+
+    legend.selectAll("rect.color-bar")
+        .data([0])
+        .join("rect")
+        .attr("class", "color-bar")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "url(#legend-gradient)");
+
+    legend.selectAll("g.legend-axis")
+        .data([0])
+        .join("g")
+        .attr("class", "legend-axis")
+        .attr("transform", `translate(0, ${legendHeight})`)
+        .call(legendAxis);
 }
